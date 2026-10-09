@@ -1,5 +1,20 @@
+
+# Python
+__pycache__/
+*.py[cod]
+
+# Virtual environments
 .venv/
+venv/
+
+# Environment secrets
 .env
-__pycache__/ 
-*.pyc
+.env.*
+!.env.example
+
+# Editors
+.vscode/
+.idea/
+
+# OS files
 .DS_Store
