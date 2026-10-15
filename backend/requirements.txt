@@ -12,4 +12,11 @@ starlette==1.7.0
 typing-inspection==0.4.4
 typing_extensions==4.16.0
 uvicorn==0.54.0
+pydantic-settings
+SQLAlchemy
+alembic
+psycopg[binary]
+PyJWT
+pwdlib[argon2]
+python-multipart
 

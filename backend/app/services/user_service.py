@@ -43,7 +43,7 @@ def login_user(db: Session, email: str, password: str):
     token_data = {
         "sub": str(user.id),
         "role": user.role,
-        "token_verssion": user.token_version,
+        "token_version": user.token_version,
     }
 
     access_token = create_access_token(token_data)

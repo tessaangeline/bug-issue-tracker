@@ -11,6 +11,7 @@ from backend.app.models.user import User
 from backend.app.models.project import Project
 from backend.app.models.issue import Issue
 
+
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
 config = context.config

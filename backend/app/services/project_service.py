@@ -2,7 +2,7 @@ from sqlalchemy.orm import Session
 
 from backend.app.models.project import Project
 from backend.app.schemas.project import ProjectCreate
-from backend.app.repositories import issue_repository
+from backend.app.repositories import project_repository
 
 
 def create_project(
