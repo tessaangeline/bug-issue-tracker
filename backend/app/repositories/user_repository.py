@@ -18,3 +18,7 @@ def get_by_email(db: Session, email: str) -> User | None:
 
 def get_by_id(db: Session, user_id: int) -> User | None:
     return db.query(User).filter(User.id == user_id).first()
+
+
+def get_all_users(db: Session) -> list[User]:
+    return db.query(User).order_by(User.id).all()

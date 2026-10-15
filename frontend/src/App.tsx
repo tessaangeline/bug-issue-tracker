@@ -1,5 +1,9 @@
 
 import { useEffect, useState } from "react";
+
+import Users from "./pages/Users";
+import "./dashboard.css";
+
 import {
   BrowserRouter,
   Routes,
@@ -62,14 +66,98 @@ function Dashboard() {
     return null;
   }
 
-  return (
-    <main style={{ padding: "2rem" }}>
-      <h1>Welcome, {user.name}!</h1>
-      <p>Email: {user.email}</p>
-      <p>Role: {user.role}</p>
-      <button onClick={handleLogout}>Log out</button>
-    </main>
-  );
+ 
+return (
+  <main className="dashboard-page">
+    <header className="dashboard-topbar">
+      <div className="brand">
+        <div className="brand-icon">B</div>
+        <span>BugTracker</span>
+      </div>
+
+      <span className="admin-badge">Administrator</span>
+    </header>
+
+    <section className="dashboard-content">
+      <div className="welcome-card">
+        <div className="welcome-text">
+          <span className="eyebrow">YOUR WORKSPACE</span>
+          <h1>Welcome, {user.name}!</h1>
+          <p>
+            Manage your BugTracker workspace and keep everything organized.
+          </p>
+        </div>
+
+        <div className="welcome-avatar">
+          {user.name.trim().charAt(0).toUpperCase()}
+        </div>
+      </div>
+
+      <section className="dashboard-section">
+        <h2>Quick actions</h2>
+        <p className="section-description">
+          Choose what you'd like to do next.
+        </p>
+
+        <div className="dashboard-actions">
+          {user.role === "super_admin" && (
+            <button
+              className="action-card"
+              onClick={() => navigate("/users")}
+            >
+              <span className="action-icon">♙</span>
+              <span className="action-title">Manage users</span>
+              <span className="action-description">
+                Create accounts and view registered users.
+              </span>
+              <span className="action-link">Open user management →</span>
+            </button>
+          )}
+
+          <button className="action-card logout-card" onClick={handleLogout}>
+            <span className="action-icon">↗</span>
+            <span className="action-title">Sign out</span>
+            <span className="action-description">
+              Securely end your current session.
+            </span>
+            <span className="action-link">Log out →</span>
+          </button>
+        </div>
+      </section>
+
+      <footer className="dashboard-footer">
+        Signed in as <strong>{user.email}</strong>
+      </footer>
+    </section>
+  </main>
+);
+
+}
+
+function ProtectedUsers() {
+  const [allowed, setAllowed] = useState<boolean | null>(null);
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    api.get<User>("/users/me")
+      .then((response) => {
+        if (response.data.role === "super_admin") {
+          setAllowed(true);
+        } else {
+          setAllowed(false);
+          navigate("/", { replace: true });
+        }
+      })
+      .catch(() => {
+        navigate("/login", { replace: true });
+      });
+  }, [navigate]);
+
+  if (allowed !== true) {
+    return <p>Checking permissions...</p>;
+  }
+
+  return <Users />;
 }
 
 function App() {
@@ -79,6 +167,7 @@ function App() {
         <Route path="/login" element={<Login />} />
         <Route path="/" element={<Dashboard />} />
         <Route path="*" element={<Navigate to="/login" replace />} />
+        <Route path="/users" element={ <ProtectedUsers /> } />
       </Routes>
     </BrowserRouter>
   );

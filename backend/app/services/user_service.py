@@ -52,3 +52,7 @@ def login_user(db: Session, email: str, password: str):
         "access_token": access_token,
         "refresh_token": refresh_token,
     }
+
+
+def get_users(db: Session) -> list[User]:
+    return user_repository.get_all_users(db)
