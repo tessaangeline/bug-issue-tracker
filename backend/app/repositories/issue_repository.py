@@ -31,3 +31,14 @@ def update_issue(db: Session, issue: Issue) -> Issue:
     db.commit()
     db.refresh(issue)
     return issue
+
+
+def get_issues_assigned_to_user(
+    db: Session,
+    user_id: int,
+) -> list[Issue]:
+    return (
+        db.query(Issue)
+        .filter(Issue.assignee_id == user_id)
+        .all()
+    )

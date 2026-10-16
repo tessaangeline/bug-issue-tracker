@@ -113,7 +113,7 @@ useEffect(() => {
       description: description.trim(),
       severity,
       priority,
-      assigneeId: assigneeId === ""? null : Number(assigneeId),
+      assignee_id: assigneeId === "" ? null : Number(assigneeId),
     });
 
     await fetchIssues();

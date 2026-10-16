@@ -6,6 +6,7 @@ import Users from "./pages/Users";
 import "./dashboard.css";
 import ManagerProjects from "./pages/ManagerProjects";
 import ProjectIssues from "./pages/ProjectIssue";
+import MyIssues from "./pages/MyIssues";
 
 import {
   BrowserRouter,
@@ -154,6 +155,22 @@ return (
   </button>
 )}
 
+{user.role === "project_member" && (
+  <button
+    className="action-card"
+    onClick={() => navigate("/my-issues")}
+  >
+    <span className="action-icon">☑</span>
+    <span className="action-title">My Issues</span>
+    <span className="action-description">
+      View issues assigned to you and track their progress.
+    </span>
+    <span className="action-link">
+      Open my issues →
+    </span>
+  </button>
+)}
+
 
           <button className="action-card logout-card" onClick={handleLogout}>
             <span className="action-icon">↗</span>
@@ -283,6 +300,33 @@ function ProtectedProjectIssues() {
   return <ProjectIssues />;
 }
 
+function ProtectedMyIssues() {
+  const [allowed, setAllowed] = useState<boolean | null>(null);
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    api
+      .get<User>("/users/me")
+      .then((response) => {
+        if (response.data.role === "project_member") {
+          setAllowed(true);
+        } else {
+          setAllowed(false);
+          navigate("/", { replace: true });
+        }
+      })
+      .catch(() => {
+        navigate("/login", { replace: true });
+      });
+  }, [navigate]);
+
+  if (allowed !== true) {
+    return <p>Checking permissions...</p>;
+  }
+
+  return <MyIssues />;
+}
+
 function App() {
   return (
     <BrowserRouter>
@@ -294,6 +338,7 @@ function App() {
         <Route path="/projects" element={<ProtectedProjects />} />
         <Route path="/manager/projects" element={<ProtectedManagerProjects />} />
         <Route path="/manager/projects/:projectId" element={<ProtectedProjectIssues />} />
+        <Route path="/my-issues" element={<ProtectedMyIssues />} />
       </Routes>
     </BrowserRouter>
   );

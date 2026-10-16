@@ -44,7 +44,7 @@ def create_issue(
         priority=issue_data.priority,
         status=IssueStatus.OPEN,
         project_id=project_id,
-        assignee_id=assignee_id,
+        assignee_id=issue_data.assignee_id,
     )
 
     return issue_repository.create_issue(db, new_issue)
@@ -117,3 +117,13 @@ def update_issue_status(
     issue.status = new_status
 
     return issue_repository.update_issue(db, issue)
+
+
+def get_my_issues(
+    db: Session,
+    user_id: int,
+) -> list[Issue]:
+    return issue_repository.get_issues_assigned_to_user(
+        db,
+        user_id,
+    )

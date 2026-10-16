@@ -4,7 +4,9 @@ from sqlalchemy.orm import Session
 from backend.app.db.database import get_db
 from backend.app.schemas.issue import IssueCreate, IssueResponse, IssueUpdate, IssueStatusUpdate
 from backend.app.services.issue_service import create_issue, get_project_issues, get_issue, update_issue, update_issue_status
-
+from backend.app.models.user import User, UserRole
+from backend.app.security import require_role
+from backend.app.services.issue_service import get_my_issues
 
 router = APIRouter(prefix="/projects", tags=["issues"])
 issue_router = APIRouter(prefix="/issues", tags=["issues"])
@@ -31,6 +33,19 @@ def get_issues(
     return get_project_issues(
         db,
         project_id,
+    )
+
+
+@issue_router.get("/my-issues", response_model=list[IssueResponse])
+def get_assigned_issues(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(
+        require_role([UserRole.PROJECT_MEMBER])
+    ),
+):
+    return get_my_issues(
+        db,
+        current_user.id,
     )
 
 
