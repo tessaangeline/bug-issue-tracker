@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Projects from "./pages/Projects";
 import Users from "./pages/Users";
 import "./dashboard.css";
+import ManagerProjects from "./pages/ManagerProjects";
 
 import {
   BrowserRouter,
@@ -76,7 +77,13 @@ return (
         <span>BugTracker</span>
       </div>
 
-      <span className="admin-badge">Administrator</span>
+      <span className="admin-badge">
+  {user.role === "super_admin"
+    ? "Administrator"
+    : user.role === "project_manager"
+      ? "Project Manager"
+      : "Project Member"}
+</span>
     </header>
 
     <section className="dashboard-content">
@@ -128,6 +135,24 @@ return (
     <span className="action-link">Open project management →</span>
   </button>
 )}
+
+{user.role === "project_manager" && (
+  <button
+    className="action-card"
+    onClick={() => navigate("/manager/projects")}
+  >
+    <span className="action-icon">▦</span>
+    <span className="action-title">My Projects</span>
+    <span className="action-description">
+      View the projects you manage, check their issues,
+      and organize your team.
+    </span>
+    <span className="action-link">
+      Open my projects →
+    </span>
+  </button>
+)}
+
 
           <button className="action-card logout-card" onClick={handleLogout}>
             <span className="action-icon">↗</span>
@@ -204,6 +229,34 @@ function ProtectedProjects() {
   return <Projects />;
 }
 
+function ProtectedManagerProjects() {
+  const [allowed, setAllowed] = useState<boolean | null>(null);
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    api
+      .get<User>("/users/me")
+      .then((response) => {
+        if (response.data.role === "project_manager") {
+          setAllowed(true);
+        } else {
+          setAllowed(false);
+          navigate("/", { replace: true });
+        }
+      })
+      .catch(() => {
+        navigate("/login", { replace: true });
+      });
+  }, [navigate]);
+
+  if (allowed !== true) {
+    return <p>Checking permissions...</p>;
+  }
+
+  return <ManagerProjects />;
+}
+
+
 function App() {
   return (
     <BrowserRouter>
@@ -213,6 +266,7 @@ function App() {
         <Route path="*" element={<Navigate to="/login" replace />} />
         <Route path="/users" element={ <ProtectedUsers /> } />
         <Route path="/projects" element={<ProtectedProjects />} />
+        <Route path="/manager/projects" element={<ProtectedManagerProjects />} />
       </Routes>
     </BrowserRouter>
   );
