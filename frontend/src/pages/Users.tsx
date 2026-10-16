@@ -19,6 +19,7 @@ export default function Users() {
   const [creating, setCreating] = useState(false);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
+  const [role, setRole] = useState("project_member");
 
   async function fetchUsers() {
     try {
@@ -46,11 +47,13 @@ export default function Users() {
         name: name.trim(),
         email: email.trim(),
         password,
+        role,
       });
 
       setName("");
       setEmail("");
       setPassword("");
+      setRole("project_member");
       setMessage("User created successfully!");
 
       await fetchUsers();
@@ -140,6 +143,26 @@ export default function Users() {
               Use at least 8 characters.
             </span>
           </div>
+
+
+<div className="form-field">
+  <label htmlFor="user-role">User role</label>
+
+  <select
+    id="user-role"
+    value={role}
+    onChange={(e) => setRole(e.target.value)}
+    className="role-select"
+  >
+    <option value="project_member">Project Member</option>
+    <option value="project_manager">Project Manager</option>
+  </select>
+
+  <span className="field-hint">
+    Choose the role and permissions for this account.
+  </span>
+</div>
+
 
           <button className="create-button" type="submit" disabled={creating}>
             {creating ? "Creating account..." : "Create user"}

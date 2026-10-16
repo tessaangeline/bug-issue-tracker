@@ -312,3 +312,27 @@
     width: 100%;
   }
 }
+
+
+.role-select {
+  width: 100%;
+  padding: 13px 14px;
+  border: 1px solid #3a3e4d;
+  border-radius: 9px;
+  background: #11141b;
+  color: #f1f3f9;
+  font: inherit;
+  font-size: 14px;
+  outline: none;
+  cursor: pointer;
+}
+
+.role-select:focus {
+  border-color: #9585ff;
+  box-shadow: 0 0 0 3px rgb(149 133 255 / 15%);
+}
+
+.role-select option {
+  background: #191c25;
+  color: #f1f3f9;
+}

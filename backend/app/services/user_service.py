@@ -13,7 +13,7 @@ def create_user(db: Session, user_data: UserCreate) -> User:
         name=user_data.name,
         email=user_data.email,
         password_hash=hashed_password,
-        role=UserRole.PROJECT_MEMBER,
+        role=UserRole(user_data.role),
     )
 
     return user_repository.create_user(db, new_user)
