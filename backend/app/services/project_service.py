@@ -12,6 +12,9 @@ def create_project(
 ) -> Project:
     new_project = Project(
         name=project_data.name,
+        description=project_data.description,
+        manager_id=project_data.manager_id,
+        member_ids=project_data.member_ids,
     )
     return project_repository.create_project(db, new_project)
 

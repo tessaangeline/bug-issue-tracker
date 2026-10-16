@@ -1,6 +1,7 @@
 
 import { useEffect, useState } from "react";
 
+import Projects from "./pages/Projects";
 import Users from "./pages/Users";
 import "./dashboard.css";
 
@@ -114,6 +115,20 @@ return (
             </button>
           )}
 
+          {user.role === "super_admin" && (
+  <button
+    className="action-card"
+    onClick={() => navigate("/projects")}
+  >
+    <span className="action-icon">▦</span>
+    <span className="action-title">Manage projects</span>
+    <span className="action-description">
+      Create projects, assign managers, and organize teams.
+    </span>
+    <span className="action-link">Open project management →</span>
+  </button>
+)}
+
           <button className="action-card logout-card" onClick={handleLogout}>
             <span className="action-icon">↗</span>
             <span className="action-title">Sign out</span>
@@ -122,6 +137,7 @@ return (
             </span>
             <span className="action-link">Log out →</span>
           </button>
+
         </div>
       </section>
 
@@ -160,6 +176,34 @@ function ProtectedUsers() {
   return <Users />;
 }
 
+
+function ProtectedProjects() {
+  const [allowed, setAllowed] = useState<boolean | null>(null);
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    api
+      .get<User>("/users/me")
+      .then((response) => {
+        if (response.data.role === "super_admin") {
+          setAllowed(true);
+        } else {
+          setAllowed(false);
+          navigate("/", { replace: true });
+        }
+      })
+      .catch(() => {
+        navigate("/login", { replace: true });
+      });
+  }, [navigate]);
+
+  if (allowed !== true) {
+    return <p>Checking permissions...</p>;
+  }
+
+  return <Projects />;
+}
+
 function App() {
   return (
     <BrowserRouter>
@@ -168,6 +212,7 @@ function App() {
         <Route path="/" element={<Dashboard />} />
         <Route path="*" element={<Navigate to="/login" replace />} />
         <Route path="/users" element={ <ProtectedUsers /> } />
+        <Route path="/projects" element={<ProtectedProjects />} />
       </Routes>
     </BrowserRouter>
   );
