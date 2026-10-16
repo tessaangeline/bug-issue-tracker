@@ -7,6 +7,7 @@ class IssueCreate(BaseModel):
     description: str
     severity: IssueSeverity
     priority: IssuePriority
+    assignee_id: int | None = None
 
 
 class IssueResponse(BaseModel):

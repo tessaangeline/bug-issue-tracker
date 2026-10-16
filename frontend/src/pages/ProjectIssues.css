@@ -1,0 +1,276 @@
+
+.issues-back-button {
+  margin-bottom: 22px;
+  padding: 8px 0;
+  border: none;
+  background: transparent;
+  color: #b7aaff;
+  font: inherit;
+  cursor: pointer;
+}
+
+.issues-welcome {
+  margin-top: 8px;
+}
+
+.issues-project-id {
+  margin-top: 10px;
+  color: #b7aaff;
+  font-size: 13px;
+}
+
+.issues-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.issues-create-button {
+  padding: 11px 16px;
+  border: 1px solid #7664d6;
+  border-radius: 9px;
+  background: #30294d;
+  color: #eeeaff;
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.issues-create-button:hover {
+  background: #403563;
+}
+
+.issues-filters {
+  display: grid;
+  grid-template-columns: minmax(200px, 1fr) 180px 180px;
+  gap: 12px;
+  margin: 22px 0;
+}
+
+.issues-filters input,
+.issues-filters select {
+  width: 100%;
+  min-width: 0;
+  padding: 12px;
+  border: 1px solid #343744;
+  border-radius: 9px;
+  background: #191c25;
+  color: #f1f3f9;
+  font: inherit;
+}
+
+.issues-filters input:focus,
+.issues-filters select:focus {
+  outline: 1px solid #8c7be8;
+  border-color: #8c7be8;
+}
+
+.issues-table-wrapper {
+  overflow-x: auto;
+  border: 1px solid #2e3240;
+  border-radius: 12px;
+}
+
+.issues-table {
+  width: 100%;
+  border-collapse: collapse;
+  color: #f1f3f9;
+  text-align: left;
+}
+
+.issues-table th,
+.issues-table td {
+  padding: 16px;
+  border-bottom: 1px solid #2e3240;
+  vertical-align: top;
+}
+
+.issues-table th {
+  background: #191c25;
+  color: #a0a8b8;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.issues-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.issues-table tbody tr:hover {
+  background: #191c25;
+}
+
+.issues-description {
+  max-width: 340px;
+  margin: 6px 0 0;
+  color: #a0a8b8;
+  font-size: 13px;
+  line-height: 1.5;
+  white-space: pre-wrap;
+}
+
+.issue-badge {
+  display: inline-block;
+  padding: 5px 9px;
+  border-radius: 20px;
+  background: #292d39;
+  color: #d8dce7;
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.status-open {
+  background: #30294d;
+  color: #c5b9ff;
+}
+
+.status-in_progress {
+  background: #26374d;
+  color: #9dcaff;
+}
+
+.status-in_review {
+  background: #44351f;
+  color: #ffd48b;
+}
+
+.status-closed {
+  background: #233a32;
+  color: #a5e5c5;
+}
+
+.severity-low {
+  color: #a5e5c5;
+}
+
+.severity-medium {
+  color: #ffd48b;
+}
+
+.severity-high {
+  color: #ffb3bb;
+}
+
+.severity-critical {
+  background: #4a252c;
+  color: #ffb3bb;
+}
+
+.issues-message {
+  color: #a0a8b8;
+}
+
+.issues-error {
+  color: #ffb3bb;
+}
+
+.issues-empty {
+  margin-top: 20px;
+  padding: 28px;
+  border: 1px dashed #39314f;
+  border-radius: 16px;
+  background: #191c25;
+}
+
+.issues-empty p {
+  margin-bottom: 0;
+  color: #a0a8b8;
+}
+
+@media (max-width: 700px) {
+  .issues-filters {
+    grid-template-columns: 1fr;
+  }
+
+  .issues-heading {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+}
+
+
+.create-issue-form {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin: 20px 0;
+  padding: 24px;
+  border: 1px solid #39314f;
+  border-radius: 14px;
+  background: #191c25;
+  color: #f1f3f9;
+}
+
+.create-issue-form h3 {
+  margin: 0 0 8px;
+}
+
+.create-issue-form label {
+  margin-top: 6px;
+  color: #c9cddd;
+  font-size: 14px;
+}
+
+.create-issue-form input,
+.create-issue-form textarea,
+.create-issue-form select {
+  box-sizing: border-box;
+  width: 100%;
+  padding: 12px;
+  border: 1px solid #343744;
+  border-radius: 8px;
+  background: #101218;
+  color: #f1f3f9;
+  font: inherit;
+}
+
+.create-issue-form input:focus,
+.create-issue-form textarea:focus,
+.create-issue-form select:focus {
+  outline: 1px solid #8c7be8;
+  border-color: #8c7be8;
+}
+
+.create-issue-fields {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.create-issue-fields > div {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.create-issue-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.create-issue-actions button {
+  padding: 11px 16px;
+  border: 1px solid #55468e;
+  border-radius: 8px;
+  background: #30294d;
+  color: #eeeaff;
+  font: inherit;
+  cursor: pointer;
+}
+
+.create-issue-actions button:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+@media (max-width: 600px) {
+  .create-issue-fields {
+    grid-template-columns: 1fr;
+  }
+}
+
+

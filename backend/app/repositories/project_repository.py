@@ -24,3 +24,7 @@ def get_projects_for_manager(
         .filter(Project.manager_id == manager_id)
         .all()
     )
+
+
+def get_project_by_id(db: Session, project_id: int) -> Project | None:
+    return db.query(Project).filter(Project.id == project_id).first()

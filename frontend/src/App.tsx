@@ -5,6 +5,7 @@ import Projects from "./pages/Projects";
 import Users from "./pages/Users";
 import "./dashboard.css";
 import ManagerProjects from "./pages/ManagerProjects";
+import ProjectIssues from "./pages/ProjectIssue";
 
 import {
   BrowserRouter,
@@ -256,6 +257,31 @@ function ProtectedManagerProjects() {
   return <ManagerProjects />;
 }
 
+function ProtectedProjectIssues() {
+  const [allowed, setAllowed] = useState<boolean | null>(null);
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    api.get<User>("/users/me")
+      .then((response) => {
+        if (response.data.role === "project_manager") {
+          setAllowed(true);
+        } else {
+          setAllowed(false);
+          navigate("/", { replace: true });
+        }
+      })
+      .catch(() => {
+        navigate("/login", { replace: true });
+      });
+  }, [navigate]);
+
+  if (allowed !== true) {
+    return <p>Checking permissions...</p>;
+  }
+
+  return <ProjectIssues />;
+}
 
 function App() {
   return (
@@ -267,6 +293,7 @@ function App() {
         <Route path="/users" element={ <ProtectedUsers /> } />
         <Route path="/projects" element={<ProtectedProjects />} />
         <Route path="/manager/projects" element={<ProtectedManagerProjects />} />
+        <Route path="/manager/projects/:projectId" element={<ProtectedProjectIssues />} />
       </Routes>
     </BrowserRouter>
   );

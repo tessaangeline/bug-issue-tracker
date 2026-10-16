@@ -4,6 +4,8 @@ from fastapi import HTTPException
 from backend.app.models.issue import Issue, IssueStatus
 from backend.app.schemas.issue import IssueCreate, IssueUpdate
 from backend.app.repositories import issue_repository
+from backend.app.models.project import Project
+from backend.app.models.user import User, UserRole
 
 
 def create_issue(
@@ -11,6 +13,30 @@ def create_issue(
     issue_data: IssueCreate,
     project_id: int,
 ) -> Issue:
+    project = db.query(Project).filter(
+        Project.id == project_id
+    ).first()
+
+    if project is None:
+        raise HTTPException(
+            status_code=404,
+            detail="Project not found",
+        )
+
+    assignee_id = issue_data.assignee_id
+
+    if assignee_id is not None:
+        assignee = db.query(User).filter(
+            User.id == assignee_id,
+            User.role == UserRole.PROJECT_MEMBER,
+        ).first()
+
+        if assignee is None or assignee_id not in (project.member_ids or []):
+            raise HTTPException(
+                status_code=400,
+                detail="Assignee must be a member of this project",
+            )
+
     new_issue = Issue(
         title=issue_data.title,
         description=issue_data.description,
@@ -18,6 +44,7 @@ def create_issue(
         priority=issue_data.priority,
         status=IssueStatus.OPEN,
         project_id=project_id,
+        assignee_id=assignee_id,
     )
 
     return issue_repository.create_issue(db, new_issue)
