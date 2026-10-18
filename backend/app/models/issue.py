@@ -1,8 +1,8 @@
-from sqlalchemy import Enum as SQLEnum, ForeignKey
-
+from sqlalchemy import Enum as SQLEnum, ForeignKey, DateTime, Integer
 from enum import Enum
-
 from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.sql import func
+from datetime import datetime
 
 from backend.app.db.base import Base
 
@@ -51,4 +51,23 @@ class Issue(Base):
     assignee_id: Mapped[int | None] = mapped_column(
         ForeignKey("users.id"),
         nullable=True
+    )
+
+    # Automatically records when the issue is created
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        server_default=func.now(),
+        nullable=False,
+    )
+
+    # Number of calendar days estimated by the manager
+    estimated_duration_days: Mapped[int | None] = mapped_column(
+        Integer,
+        nullable=True,
+    )
+
+    # Recorded when the issue is marked as completed
+    completed_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True),
+        nullable=True,
     )

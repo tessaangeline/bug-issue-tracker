@@ -15,6 +15,11 @@ type Issue = {
   priority: Priority;
   project_id: number;
   assignee_id: number | null;
+  created_at: string | null;
+  estimated_duration_days: number | null;
+  due_date: string | null;
+  completed_at: string | null;
+  actual_duration_days: number | null;
 };
 
 const STATUSES: Status[] = [
@@ -37,6 +42,16 @@ const formatLabel = (value: string) =>
   value.replaceAll("_", " ").replace(/\b\w/g, (char) =>
     char.toUpperCase()
   );
+
+const formatDate = (value: string | null | undefined) => {
+  if (!value) return "—";
+
+  const date = new Date(value);
+
+  if (Number.isNaN(date.getTime())) return "—";
+
+  return date.toLocaleDateString();
+};
 
 export default function MyIssues() {
   const [issues, setIssues] = useState<Issue[]>([]);
@@ -64,9 +79,10 @@ export default function MyIssues() {
   }, []);
 
   const projects = useMemo(
-    () => [...new Set(issues.map((issue) => issue.project_id))].sort(
-      (a, b) => a - b
-    ),
+    () =>
+      [...new Set(issues.map((issue) => issue.project_id))].sort(
+        (a, b) => a - b
+      ),
     [issues]
   );
 
@@ -129,7 +145,17 @@ export default function MyIssues() {
   }
 
   if (loading) return <p>Loading your issues...</p>;
-  if (error) return <p role="alert">{error}</p>;
+
+  if (error) {
+    return (
+      <main className="dashboard-page">
+        <section className="dashboard-content">
+          <h1>My Issues</h1>
+          <p role="alert">{error}</p>
+        </section>
+      </main>
+    );
+  }
 
   return (
     <main className="dashboard-page">
@@ -221,6 +247,10 @@ export default function MyIssues() {
                   <th>Status</th>
                   <th>Severity</th>
                   <th>Priority</th>
+                  <th>Created</th>
+                  <th>Estimated</th>
+                  <th>Due Date</th>
+                  <th>Actual Duration</th>
                 </tr>
               </thead>
 
@@ -233,7 +263,9 @@ export default function MyIssues() {
                       </strong>
                       <p>{issue.description}</p>
                     </td>
+
                     <td>Project #{issue.project_id}</td>
+
                     <td>
                       <select
                         value={issue.status}
@@ -252,12 +284,31 @@ export default function MyIssues() {
                           </option>
                         ))}
                       </select>
+
                       {updatingId === issue.id && (
                         <small> Saving...</small>
                       )}
                     </td>
+
                     <td>{formatLabel(issue.severity)}</td>
                     <td>{formatLabel(issue.priority)}</td>
+
+                    <td>{formatDate(issue.created_at)}</td>
+
+                    <td>
+                      {issue.estimated_duration_days != null
+                        ? `${issue.estimated_duration_days} day(s)`
+                        : "Not set"}
+                    </td>
+
+                    <td>{formatDate(issue.due_date)}</td>
+
+                    <td>
+                      {issue.status === "closed" &&
+                      issue.actual_duration_days != null
+                        ? `${issue.actual_duration_days} day(s)`
+                        : "Pending"}
+                    </td>
                   </tr>
                 ))}
               </tbody>

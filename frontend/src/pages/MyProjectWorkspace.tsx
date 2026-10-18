@@ -30,6 +30,11 @@ type Issue = {
   priority: Priority;
   project_id: number;
   assignee_id: number | null;
+  created_at: string | null;
+  estimated_duration_days: number | null;
+  due_date: string | null;
+  completed_at: string | null;
+  actual_duration_days: number | null;
 };
 
 const STATUSES: Status[] = [
@@ -46,6 +51,16 @@ const formatLabel = (value: string) =>
   value.replaceAll("_", " ").replace(/\b\w/g, (char) =>
     char.toUpperCase()
   );
+
+const formatDate = (value: string | null | undefined) => {
+  if (!value) return "—";
+
+  const date = new Date(value);
+
+  if (Number.isNaN(date.getTime())) return "—";
+
+  return date.toLocaleDateString();
+};
 
 export default function MyProjectWorkspace() {
   const { projectId } = useParams<{ projectId: string }>();
@@ -150,7 +165,13 @@ export default function MyProjectWorkspace() {
   }
 
   if (loading) {
-    return <main className="dashboard-page"><p>Loading project...</p></main>;
+    return (
+      <main className="dashboard-page">
+        <section className="dashboard-content">
+          <p>Loading project...</p>
+        </section>
+      </main>
+    );
   }
 
   if (error || !project) {
@@ -279,7 +300,10 @@ export default function MyProjectWorkspace() {
             </select>
           </div>
 
-          <p>{filteredIssues.length} issues shown · {issues.length} assigned to you in this project</p>
+          <p>
+            {filteredIssues.length} issues shown · {issues.length} assigned to
+            you in this project
+          </p>
 
           {filteredIssues.length === 0 ? (
             <p>No assigned issues match your filters in this project.</p>
@@ -292,15 +316,23 @@ export default function MyProjectWorkspace() {
                     <th>Status</th>
                     <th>Severity</th>
                     <th>Priority</th>
+                    <th>Created</th>
+                    <th>Estimated</th>
+                    <th>Due Date</th>
+                    <th>Actual Duration</th>
                   </tr>
                 </thead>
+
                 <tbody>
                   {filteredIssues.map((issue) => (
                     <tr key={issue.id}>
                       <td>
-                        <strong>#{issue.id} {issue.title}</strong>
+                        <strong>
+                          #{issue.id} {issue.title}
+                        </strong>
                         <p>{issue.description}</p>
                       </td>
+
                       <td>
                         <select
                           value={issue.status}
@@ -319,10 +351,28 @@ export default function MyProjectWorkspace() {
                             </option>
                           ))}
                         </select>
+
                         {updatingId === issue.id && <small> Saving...</small>}
                       </td>
+
                       <td>{formatLabel(issue.severity)}</td>
                       <td>{formatLabel(issue.priority)}</td>
+                      <td>{formatDate(issue.created_at)}</td>
+
+                      <td>
+                        {issue.estimated_duration_days != null
+                          ? `${issue.estimated_duration_days} day(s)`
+                          : "Not set"}
+                      </td>
+
+                      <td>{formatDate(issue.due_date)}</td>
+
+                      <td>
+                        {issue.status === "closed" &&
+                        issue.actual_duration_days != null
+                          ? `${issue.actual_duration_days} day(s)`
+                          : "Pending"}
+                      </td>
                     </tr>
                   ))}
                 </tbody>
