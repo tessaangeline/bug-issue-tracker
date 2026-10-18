@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session
 from pydantic import BaseModel, EmailStr
 
 from backend.app.db.database import get_db
-from backend.app.schemas.user import UserCreate, UserResponse
+from backend.app.schemas.user import UserCreate, UserResponse, UserUpdate
 from backend.app.services import user_service
 from backend.app.security import require_role, get_current_user
 
@@ -50,3 +50,27 @@ def get_users(
     ),
 ):
     return user_service.get_users(db)
+
+
+@router.put("/{user_id}", response_model=UserResponse)
+def update_user(
+    user_id: int,
+    user_data: UserUpdate,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(
+        require_role([UserRole.SUPER_ADMIN])
+    ),
+):
+    return user_service.update_user(db, user_id, user_data)
+
+
+@router.delete("/{user_id}")
+def delete_user(
+    user_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(
+        require_role([UserRole.SUPER_ADMIN])
+    ),
+):
+    user_service.delete_user(db, user_id, current_user.id)
+    return {"message": "User deleted successfully."}

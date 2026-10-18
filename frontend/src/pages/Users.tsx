@@ -10,25 +10,40 @@ type User = {
   role: string;
 };
 
+type EditableRole = "project_member" | "project_manager";
+
+type Toast = {
+  type: "success" | "error";
+  text: string;
+};
+
 export default function Users() {
   const [users, setUsers] = useState<User[]>([]);
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [role, setRole] = useState<EditableRole>("project_member");
+
   const [loading, setLoading] = useState(true);
   const [creating, setCreating] = useState(false);
+  const [savingEdit, setSavingEdit] = useState(false);
+  const [deletingId, setDeletingId] = useState<number | null>(null);
+
+  const [editingUser, setEditingUser] = useState<User | null>(null);
+  const [editName, setEditName] = useState("");
+  const [editEmail, setEditEmail] = useState("");
+  const [editRole, setEditRole] =
+    useState<EditableRole>("project_member");
+
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
-  const [role, setRole] = useState("project_member");
-  const [toast, setToast] = useState<{
-  type: "success" | "error";
-  text: string;
-} | null>(null);
+  const [toast, setToast] = useState<Toast | null>(null);
 
   async function fetchUsers() {
     try {
       const response = await api.get<User[]>("/users/");
       setUsers(response.data);
+      setError("");
     } catch {
       setError("Couldn't load users. Please try again.");
     } finally {
@@ -40,6 +55,20 @@ export default function Users() {
     void fetchUsers();
   }, []);
 
+  function showToast(type: Toast["type"], text: string) {
+    setToast({ type, text });
+  }
+
+  function getErrorMessage(err: unknown, fallback: string): string {
+    const detail = (
+      err as {
+        response?: { data?: { detail?: unknown } };
+      }
+    )?.response?.data?.detail;
+
+    return typeof detail === "string" ? detail : fallback;
+  }
+
   async function handleCreateUser(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setMessage("");
@@ -47,70 +76,156 @@ export default function Users() {
     setCreating(true);
 
     try {
-  await api.post("/users/", {
-    name,
-    email,
-    password,
-    role,
-  });
+      await api.post("/users/", {
+        name,
+        email,
+        password,
+        role,
+      });
 
       setName("");
       setEmail("");
       setPassword("");
       setRole("project_member");
+
       setMessage("User created successfully!");
-      setToast({
-        type: "success",
-        text: "User created successfully!",
-    });
+      showToast("success", "User created successfully!");
 
       await fetchUsers();
-  } catch (err: any) {
+    } catch (err: unknown) {
+      const errorMessage = getErrorMessage(
+        err,
+        "Couldn't create user. Please check the details and try again."
+      );
 
-    console.log("Create user error:", err.response?.data);
-    const detail = err.response?.data?.detail;
+      setError(errorMessage);
+      showToast("error", errorMessage);
+    } finally {
+      setCreating(false);
+    }
+  }
 
-    const errorMessage =
+  function startEditing(user: User) {
+    if (
+      user.role !== "project_member" &&
+      user.role !== "project_manager"
+    ) {
+      showToast("error", "This account's role cannot be edited here.");
+      return;
+    }
+
+    setEditingUser(user);
+    setEditName(user.name);
+    setEditEmail(user.email);
+    setEditRole(user.role);
+    setMessage("");
+    setError("");
+  }
+
+  function cancelEditing() {
+    setEditingUser(null);
+    setEditName("");
+    setEditEmail("");
+    setEditRole("project_member");
+  }
+
+  async function handleUpdateUser(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+
+    if (!editingUser) return;
+
+    setSavingEdit(true);
+    setError("");
+
+    try {
+      await api.put(`/users/${editingUser.id}`, {
+        name: editName.trim(),
+        email: editEmail.trim(),
+        role: editRole,
+      });
+
+      showToast("success", "User updated successfully!");
+      cancelEditing();
+      await fetchUsers();
+    } catch (err: unknown) {
+      showToast(
+        "error",
+        getErrorMessage(
+          err,
+          "Couldn't update user. Please check the details and try again."
+        )
+      );
+    } finally {
+      setSavingEdit(false);
+    }
+  }
+
+  async function handleDeleteUser(user: User) {
+    const confirmed = window.confirm(
+      `Are you sure you want to delete ${user.name} (${user.email})? This action cannot be undone.`
+    );
+
+    if (!confirmed) return;
+
+    setDeletingId(user.id);
+
+    try {
+      await api.delete(`/users/${user.id}`);
+
+      showToast("success", `${user.name} was deleted successfully.`);
+
+      if (editingUser?.id === user.id) {
+        cancelEditing();
+      }
+
+      await fetchUsers();
+    } catch (err: any) {
+  console.error("Delete user error:", err.response?.status);
+  console.error("Delete user response:", err.response?.data);
+
+  const detail = err.response?.data?.detail;
+
+  setToast({
+    type: "error",
+    text:
       typeof detail === "string"
         ? detail
-        : "Couldn't create user. Please check the details and try again.";
-
-    setError(errorMessage);
-setToast({
-  type: "error",
-  text: errorMessage,
-});
-
-  } finally {
-    setCreating(false);
+        : "Couldn't delete the user. Check the browser console.",
+  });
+} finally {
+      setDeletingId(null);
+    }
   }
-}
 
-  function formatRole(role: string) {
-    if (role === "super_admin") return "Super Admin";
-    return role.replaceAll("_", " ");
+  function formatRole(userRole: string) {
+    if (userRole === "super_admin") return "Super Admin";
+
+    return userRole
+      .split("_")
+      .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+      .join(" ");
   }
 
   return (
     <main className="users-page">
-        {toast && (
-  <div
-    className={`toast toast-${toast.type}`}
-    role={toast.type === "error" ? "alert" : "status"}
-  >
-    <span>{toast.type === "success" ? "✓" : "⚠"}</span>
-    <span>{toast.text}</span>
+      {toast && (
+        <div
+          className={`toast toast-${toast.type}`}
+          role={toast.type === "error" ? "alert" : "status"}
+        >
+          <span>{toast.type === "success" ? "✓" : "⚠"}</span>
+          <span>{toast.text}</span>
 
-    <button
-      type="button"
-      className="toast-close"
-      onClick={() => setToast(null)}
-      aria-label="Dismiss notification"
-    >
-      ×
-    </button>
-  </div>
-)}
+          <button
+            type="button"
+            className="toast-close"
+            onClick={() => setToast(null)}
+            aria-label="Dismiss notification"
+          >
+            ×
+          </button>
+        </div>
+      )}
 
       <header className="users-header">
         <div className="users-heading">
@@ -118,8 +233,6 @@ setToast({
           <h1>User Management</h1>
           <p>Create accounts and manage access to your workspace.</p>
         </div>
-
-
 
         <div className="users-count">
           <span>Total users</span>
@@ -179,39 +292,109 @@ setToast({
               minLength={8}
               required
             />
-            <span className="field-hint">
-              Use at least 8 characters.
-            </span>
+            <span className="field-hint">Use at least 8 characters.</span>
           </div>
 
-
-<div className="form-field">
-  <label htmlFor="user-role">User role</label>
-
-  <select
-    id="user-role"
-    value={role}
-    onChange={(e) => setRole(e.target.value)}
-    className="role-select"
-  >
-    <option value="project_member">Project Member</option>
-    <option value="project_manager">Project Manager</option>
-  </select>
-
-  <span className="field-hint">
-    Choose the role and permissions for this account.
-  </span>
-</div>
-
+          <div className="form-field">
+            <label htmlFor="user-role">User role</label>
+            <select
+              id="user-role"
+              value={role}
+              onChange={(e) => setRole(e.target.value as EditableRole)}
+              className="role-select"
+            >
+              <option value="project_member">Project Member</option>
+              <option value="project_manager">Project Manager</option>
+            </select>
+            <span className="field-hint">
+              Choose the role and permissions for this account.
+            </span>
+          </div>
 
           <button className="create-button" type="submit" disabled={creating}>
             {creating ? "Creating account..." : "Create user"}
           </button>
 
           {message && <p className="form-message success">{message}</p>}
-          {error && <p className="form-message error">{error}</p>}
+          {error && users.length > 0 && (
+            <p className="form-message error">{error}</p>
+          )}
         </form>
       </section>
+
+      {editingUser && (
+        <section className="users-card edit-card">
+          <div className="section-heading">
+            <div className="section-icon">
+              <span aria-hidden="true">✎</span>
+            </div>
+            <div>
+              <h2>Edit user #{editingUser.id}</h2>
+              <p>Update this user's account details and role.</p>
+            </div>
+          </div>
+
+          <form className="user-form" onSubmit={handleUpdateUser}>
+            <div className="form-field">
+              <label htmlFor="edit-user-name">Full name</label>
+              <input
+                id="edit-user-name"
+                value={editName}
+                onChange={(e) => setEditName(e.target.value)}
+                required
+              />
+            </div>
+
+            <div className="form-field">
+              <label htmlFor="edit-user-email">Email address</label>
+              <input
+                id="edit-user-email"
+                type="email"
+                value={editEmail}
+                onChange={(e) => setEditEmail(e.target.value)}
+                required
+              />
+            </div>
+
+            <div className="form-field">
+              <label htmlFor="edit-user-role">User role</label>
+              <select
+                id="edit-user-role"
+                className="role-select"
+                value={editRole}
+                onChange={(e) =>
+                  setEditRole(e.target.value as EditableRole)
+                }
+              >
+                <option value="project_member">Project Member</option>
+                <option value="project_manager">Project Manager</option>
+              </select>
+              <span className="field-hint">
+                Super Admin accounts cannot be edited using this form.
+              </span>
+            </div>
+
+            <div className="edit-actions">
+              <button
+                className="create-button"
+                type="submit"
+                disabled={savingEdit}
+              >
+                {savingEdit ? "Saving changes..." : "Save changes"}
+              </button>
+
+              <button
+                className="secondary-button"
+                type="button"
+                onClick={cancelEditing}
+                disabled={savingEdit}
+              >
+                Cancel
+              </button>
+            </div>
+          </form>
+        </section>
+      )}
 
       <section className="users-card directory-card">
         <div className="section-heading directory-heading">
@@ -237,32 +420,75 @@ setToast({
                   <th>Name</th>
                   <th>Email address</th>
                   <th>Role</th>
+                  <th>Actions</th>
                 </tr>
               </thead>
+
               <tbody>
-                {users.map((user) => (
-                  <tr key={user.id}>
-                    <td className="user-id">#{user.id}</td>
-                    <td>
-                      <div className="user-name-cell">
-                        <span className="user-avatar">
-                          {user.name.trim().charAt(0).toUpperCase()}
+                {users.map((user) => {
+                  const isSuperAdmin = user.role === "super_admin";
+
+                  return (
+                    <tr key={user.id}>
+                      <td className="user-id">#{user.id}</td>
+
+                      <td>
+                        <div className="user-name-cell">
+                          <span className="user-avatar">
+                            {user.name.trim().charAt(0).toUpperCase()}
+                          </span>
+                          <span>{user.name}</span>
+                        </div>
+                      </td>
+
+                      <td className="user-email">{user.email}</td>
+
+                      <td>
+                        <span
+                          className={`role-pill ${
+                            isSuperAdmin ? "admin-role" : ""
+                          }`}
+                        >
+                          {formatRole(user.role)}
                         </span>
-                        <span>{user.name}</span>
-                      </div>
-                    </td>
-                    <td className="user-email">{user.email}</td>
-                    <td>
-                      <span
-                        className={`role-pill ${
-                          user.role === "super_admin" ? "admin-role" : ""
-                        }`}
-                      >
-                        {formatRole(user.role)}
-                      </span>
-                    </td>
-                  </tr>
-                ))}
+                      </td>
+
+                      <td>
+                        <div className="user-actions">
+                          <button
+                            type="button"
+                            className="action-button edit-button"
+                            onClick={() => startEditing(user)}
+                            disabled={isSuperAdmin || savingEdit}
+                            title={
+                              isSuperAdmin
+                                ? "Super Admin accounts cannot be edited here"
+                                : "Edit user"
+                            }
+                          >
+                            Edit
+                          </button>
+
+                          <button
+                            type="button"
+                            className="action-button delete-button"
+                            onClick={() => void handleDeleteUser(user)}
+                            disabled={
+                              isSuperAdmin || deletingId === user.id
+                            }
+                            title={
+                              isSuperAdmin
+                                ? "Super Admin accounts cannot be deleted here"
+                                : "Delete user"
+                            }
+                          >
+                            {deletingId === user.id ? "Deleting..." : "Delete"}
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>

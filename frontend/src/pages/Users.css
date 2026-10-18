@@ -1,6 +1,11 @@
 
+/* =========================
+   Page layout
+========================= */
+
 .users-page {
   min-height: 100vh;
+  width: 100%;
   padding: 48px 6%;
   background: #101218;
   color: #f1f3f9;
@@ -26,7 +31,9 @@
 .users-heading h1 {
   margin: 12px 0 8px;
   font-size: clamp(30px, 4vw, 42px);
+  line-height: 1.2;
   letter-spacing: -1.2px;
+  color: #f1f3f9;
 }
 
 .users-heading p,
@@ -56,7 +63,12 @@
   font-size: 28px;
 }
 
+/* =========================
+   Cards and section headings
+========================= */
+
 .users-card {
+  width: 100%;
   max-width: 1100px;
   margin: 0 auto 24px;
   padding: 28px;
@@ -76,6 +88,8 @@
 .section-heading h2 {
   margin: 0 0 5px;
   font-size: 21px;
+  line-height: 1.3;
+  color: #f1f3f9;
 }
 
 .section-heading p {
@@ -85,6 +99,7 @@
 .section-icon {
   width: 42px;
   height: 42px;
+  flex-shrink: 0;
   display: grid;
   place-items: center;
   background: #292344;
@@ -93,13 +108,19 @@
   font-size: 27px;
 }
 
+/* =========================
+   Create and edit forms
+========================= */
+
 .user-form {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 22px;
+  align-items: start;
 }
 
 .form-field {
+  min-width: 0;
   display: flex;
   flex-direction: column;
   gap: 9px;
@@ -111,8 +132,11 @@
   font-weight: 600;
 }
 
-.form-field input {
+.form-field input,
+.role-select {
   width: 100%;
+  min-width: 0;
+  min-height: 45px;
   padding: 13px 14px;
   box-sizing: border-box;
   border: 1px solid #3a3e4d;
@@ -129,15 +153,28 @@
   color: #697184;
 }
 
-.form-field input:focus {
+.form-field input:focus,
+.role-select:focus {
   border-color: #9585ff;
   box-shadow: 0 0 0 3px rgb(149 133 255 / 15%);
+}
+
+.role-select {
+  cursor: pointer;
+}
+
+.role-select option {
+  background: #191c25;
+  color: #f1f3f9;
 }
 
 .field-hint {
   color: #858da0;
   font-size: 12px;
+  line-height: 1.5;
 }
+
+/* Primary button */
 
 .create-button {
   align-self: end;
@@ -148,6 +185,7 @@
   background: #7965e8;
   color: white;
   font: inherit;
+  font-size: 14px;
   font-weight: 600;
   cursor: pointer;
   transition: background 0.2s, transform 0.2s;
@@ -162,6 +200,8 @@
   opacity: 0.65;
   cursor: wait;
 }
+
+/* Form messages */
 
 .form-message {
   grid-column: 1 / -1;
@@ -181,6 +221,59 @@
   background: rgb(255 85 100 / 9%);
 }
 
+/* =========================
+   Edit form
+========================= */
+
+.edit-card {
+  border-color: #514477;
+}
+
+.edit-card .section-icon {
+  color: #c3b8ff;
+  font-size: 24px;
+}
+
+.edit-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  align-self: end;
+  flex-wrap: wrap;
+}
+
+.edit-actions .create-button {
+  align-self: auto;
+}
+
+.secondary-button {
+  min-height: 45px;
+  padding: 0 18px;
+  border: 1px solid #414657;
+  border-radius: 9px;
+  background: #252936;
+  color: #e1e5ef;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s, border-color 0.2s;
+}
+
+.secondary-button:hover:not(:disabled) {
+  background: #303546;
+  border-color: #656d82;
+}
+
+.secondary-button:disabled {
+  opacity: 0.6;
+  cursor: wait;
+}
+
+/* =========================
+   User directory
+========================= */
+
 .directory-heading {
   justify-content: space-between;
 }
@@ -196,6 +289,7 @@
 }
 
 .users-table-wrapper {
+  width: 100%;
   overflow-x: auto;
 }
 
@@ -228,6 +322,7 @@
   padding: 17px 16px;
   border-bottom: 1px solid #292d39;
   font-size: 14px;
+  vertical-align: middle;
 }
 
 .users-table tbody tr:last-child td {
@@ -286,57 +381,57 @@
   font-size: 14px;
 }
 
-@media (max-width: 650px) {
-  .users-page {
-    padding: 28px 16px;
-  }
+/* =========================
+   Edit and delete actions
+========================= */
 
-  .users-header {
-    align-items: flex-start;
-  }
-
-  .users-count {
-    min-width: 75px;
-    padding: 12px;
-  }
-
-  .users-card {
-    padding: 20px 16px;
-  }
-
-  .user-form {
-    grid-template-columns: 1fr;
-  }
-
-  .create-button {
-    width: 100%;
-  }
+.user-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
-
-.role-select {
-  width: 100%;
-  padding: 13px 14px;
-  border: 1px solid #3a3e4d;
-  border-radius: 9px;
-  background: #11141b;
-  color: #f1f3f9;
+.action-button {
+  padding: 7px 11px;
+  border: 1px solid transparent;
+  border-radius: 7px;
   font: inherit;
-  font-size: 14px;
-  outline: none;
+  font-size: 12px;
+  font-weight: 600;
   cursor: pointer;
+  transition: background 0.2s, border-color 0.2s;
 }
 
-.role-select:focus {
-  border-color: #9585ff;
-  box-shadow: 0 0 0 3px rgb(149 133 255 / 15%);
+.edit-button {
+  background: #292344;
+  color: #c3b8ff;
+  border-color: #413568;
 }
 
-.role-select option {
-  background: #191c25;
-  color: #f1f3f9;
+.edit-button:hover:not(:disabled) {
+  background: #39305d;
+  border-color: #7561b8;
 }
- 
+
+.delete-button {
+  background: #351f29;
+  color: #ff9ca6;
+  border-color: #59303b;
+}
+
+.delete-button:hover:not(:disabled) {
+  background: #492530;
+  border-color: #884251;
+}
+
+.action-button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* =========================
+   Toast notifications
+========================= */
 
 .toast {
   position: fixed;
@@ -349,7 +444,7 @@
   max-width: 420px;
   padding: 16px 18px;
   border-radius: 10px;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 8px 24px rgb(0 0 0 / 15%);
   font-size: 14px;
   font-weight: 500;
   animation: toast-slide-in 0.25s ease-out;
@@ -382,13 +477,79 @@
     opacity: 0;
     transform: translateX(20px);
   }
+
   to {
     opacity: 1;
     transform: translateX(0);
   }
 }
 
+/* =========================
+   Responsive layout
+========================= */
+
+@media (max-width: 800px) {
+  .users-page {
+    padding: 32px 4%;
+  }
+
+  .users-header {
+    align-items: flex-start;
+  }
+
+  .users-count {
+    min-width: 95px;
+    padding: 14px;
+  }
+
+  .users-card {
+    padding: 22px;
+  }
+
+  .user-form {
+    grid-template-columns: 1fr;
+  }
+
+  .create-button {
+    width: 100%;
+  }
+
+  .edit-actions {
+    grid-column: 1 / -1;
+    width: 100%;
+  }
+
+  .edit-actions .create-button,
+  .edit-actions .secondary-button {
+    flex: 1;
+  }
+}
+
 @media (max-width: 480px) {
+  .users-page {
+    padding: 24px 14px;
+  }
+
+  .users-header {
+    flex-direction: column;
+  }
+
+  .users-heading h1 {
+    font-size: 32px;
+  }
+
+  .users-card {
+    padding: 18px 14px;
+  }
+
+  .section-heading {
+    align-items: flex-start;
+  }
+
+  .directory-heading {
+    flex-wrap: wrap;
+  }
+
   .toast {
     top: 12px;
     right: 12px;

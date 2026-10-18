@@ -5,9 +5,15 @@ from pydantic import BaseModel, ConfigDict, EmailStr
 
 class UserCreate(BaseModel):
     name: str
-    email: str
+    email: EmailStr
     password: str
     role: Literal["project_manager", "project_member"] = "project_member"
+
+
+class UserUpdate(BaseModel):
+    name: str
+    email: EmailStr
+    role: Literal["project_manager", "project_member"]
 
 
 class UserResponse(BaseModel):

@@ -28,3 +28,14 @@ def get_projects_for_manager(
 
 def get_project_by_id(db: Session, project_id: int) -> Project | None:
     return db.query(Project).filter(Project.id == project_id).first()
+
+
+def get_projects_with_member(
+    db: Session,
+    user_id: int,
+) -> list[Project]:
+    return (
+        db.query(Project)
+        .filter(Project.member_ids.any(user_id))
+        .all()
+    )
