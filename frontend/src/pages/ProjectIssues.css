@@ -388,3 +388,46 @@
   }
 }
 
+
+.issues-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+  padding: 18px 0 4px;
+  font-size: 14px;
+}
+
+.issues-pagination-controls {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.issues-pagination-controls button {
+  padding: 8px 14px;
+  border: 1px solid var(--border, #d1d5db);
+  border-radius: 8px;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+}
+
+.issues-pagination-controls button:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+@media (max-width: 600px) {
+  .issues-pagination {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .issues-pagination-controls {
+    width: 100%;
+    justify-content: space-between;
+  }
+}
+

@@ -17,6 +17,8 @@ type Toast = {
   text: string;
 };
 
+const USERS_PER_PAGE = 10;
+
 export default function Users() {
   const [users, setUsers] = useState<User[]>([]);
   const [name, setName] = useState("");
@@ -39,10 +41,13 @@ export default function Users() {
   const [error, setError] = useState("");
   const [toast, setToast] = useState<Toast | null>(null);
 
+  const [currentPage, setCurrentPage] = useState(1);
+
   async function fetchUsers() {
     try {
       const response = await api.get<User[]>("/users/");
       setUsers(response.data);
+      setCurrentPage(1);
       setError("");
     } catch {
       setError("Couldn't load users. Please try again.");
@@ -54,6 +59,18 @@ export default function Users() {
   useEffect(() => {
     void fetchUsers();
   }, []);
+
+  const totalPages = Math.max(
+    1,
+    Math.ceil(users.length / USERS_PER_PAGE)
+  );
+
+  const startIndex = (currentPage - 1) * USERS_PER_PAGE;
+
+  const paginatedUsers = users.slice(
+    startIndex,
+    startIndex + USERS_PER_PAGE
+  );
 
   function showToast(type: Toast["type"], text: string) {
     setToast({ type, text });
@@ -179,20 +196,14 @@ export default function Users() {
       }
 
       await fetchUsers();
-    } catch (err: any) {
-  console.error("Delete user error:", err.response?.status);
-  console.error("Delete user response:", err.response?.data);
+    } catch (err: unknown) {
+      const errorMessage = getErrorMessage(
+        err,
+        "Couldn't delete the user. Please try again."
+      );
 
-  const detail = err.response?.data?.detail;
-
-  setToast({
-    type: "error",
-    text:
-      typeof detail === "string"
-        ? detail
-        : "Couldn't delete the user. Check the browser console.",
-  });
-} finally {
+      showToast("error", errorMessage);
+    } finally {
       setDeletingId(null);
     }
   }
@@ -402,7 +413,9 @@ export default function Users() {
             <h2>All users</h2>
             <p>Accounts registered in your workspace.</p>
           </div>
-          <span className="user-count-badge">{users.length} accounts</span>
+          <span className="user-count-badge">
+            {users.length} accounts
+          </span>
         </div>
 
         {loading ? (
@@ -412,86 +425,128 @@ export default function Users() {
         ) : users.length === 0 ? (
           <p className="table-state">No users found yet.</p>
         ) : (
-          <div className="users-table-wrapper">
-            <table className="users-table">
-              <thead>
-                <tr>
-                  <th>ID</th>
-                  <th>Name</th>
-                  <th>Email address</th>
-                  <th>Role</th>
-                  <th>Actions</th>
-                </tr>
-              </thead>
+          <>
+            <div className="users-table-wrapper">
+              <table className="users-table">
+                <thead>
+                  <tr>
+                    <th>ID</th>
+                    <th>Name</th>
+                    <th>Email address</th>
+                    <th>Role</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
 
-              <tbody>
-                {users.map((user) => {
-                  const isSuperAdmin = user.role === "super_admin";
+                <tbody>
+                  {paginatedUsers.map((user) => {
+                    const isSuperAdmin = user.role === "super_admin";
 
-                  return (
-                    <tr key={user.id}>
-                      <td className="user-id">#{user.id}</td>
+                    return (
+                      <tr key={user.id}>
+                        <td className="user-id">#{user.id}</td>
 
-                      <td>
-                        <div className="user-name-cell">
-                          <span className="user-avatar">
-                            {user.name.trim().charAt(0).toUpperCase()}
+                        <td>
+                          <div className="user-name-cell">
+                            <span className="user-avatar">
+                              {user.name.trim().charAt(0).toUpperCase()}
+                            </span>
+                            <span>{user.name}</span>
+                          </div>
+                        </td>
+
+                        <td className="user-email">{user.email}</td>
+
+                        <td>
+                          <span
+                            className={`role-pill ${
+                              isSuperAdmin ? "admin-role" : ""
+                            }`}
+                          >
+                            {formatRole(user.role)}
                           </span>
-                          <span>{user.name}</span>
-                        </div>
-                      </td>
+                        </td>
 
-                      <td className="user-email">{user.email}</td>
+                        <td>
+                          <div className="user-actions">
+                            <button
+                              type="button"
+                              className="action-button edit-button"
+                              onClick={() => startEditing(user)}
+                              disabled={isSuperAdmin || savingEdit}
+                              title={
+                                isSuperAdmin
+                                  ? "Super Admin accounts cannot be edited here"
+                                  : "Edit user"
+                              }
+                            >
+                              Edit
+                            </button>
 
-                      <td>
-                        <span
-                          className={`role-pill ${
-                            isSuperAdmin ? "admin-role" : ""
-                          }`}
-                        >
-                          {formatRole(user.role)}
-                        </span>
-                      </td>
+                            <button
+                              type="button"
+                              className="action-button delete-button"
+                              onClick={() => void handleDeleteUser(user)}
+                              disabled={
+                                isSuperAdmin || deletingId === user.id
+                              }
+                              title={
+                                isSuperAdmin
+                                  ? "Super Admin accounts cannot be deleted here"
+                                  : "Delete user"
+                              }
+                            >
+                              {deletingId === user.id
+                                ? "Deleting..."
+                                : "Delete"}
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
 
-                      <td>
-                        <div className="user-actions">
-                          <button
-                            type="button"
-                            className="action-button edit-button"
-                            onClick={() => startEditing(user)}
-                            disabled={isSuperAdmin || savingEdit}
-                            title={
-                              isSuperAdmin
-                                ? "Super Admin accounts cannot be edited here"
-                                : "Edit user"
-                            }
-                          >
-                            Edit
-                          </button>
+            <div className="pagination">
+              <span className="pagination-info">
+                Showing {startIndex + 1}–
+                {Math.min(startIndex + USERS_PER_PAGE, users.length)} of{" "}
+                {users.length} users
+              </span>
 
-                          <button
-                            type="button"
-                            className="action-button delete-button"
-                            onClick={() => void handleDeleteUser(user)}
-                            disabled={
-                              isSuperAdmin || deletingId === user.id
-                            }
-                            title={
-                              isSuperAdmin
-                                ? "Super Admin accounts cannot be deleted here"
-                                : "Delete user"
-                            }
-                          >
-                            {deletingId === user.id ? "Deleting..." : "Delete"}
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
+              <div className="pagination-controls">
+                <button
+                  type="button"
+                  className="secondary-button"
+                  disabled={currentPage === 1}
+                  onClick={() =>
+                    setCurrentPage((page) => Math.max(1, page - 1))
+                  }
+                >
+                  Previous
+                </button>
+
+                <span>
+                  Page {currentPage} of {totalPages}
+                </span>
+
+                <button
+                  type="button"
+                  className="secondary-button"
+                  disabled={currentPage >= totalPages}
+                  onClick={() =>
+                    setCurrentPage((page) =>
+                      Math.min(totalPages, page + 1)
+                    )
+                  }
+                >
+                  Next
+                </button>
+              </div>
+            </div>
+          </>
         )}
       </section>
     </main>

@@ -1,6 +1,8 @@
 
 import { useEffect, useMemo, useState } from "react";
 import api from "../api/axios";
+import "./MyIssues.css";
+
 
 type Status = "open" | "in_progress" | "in_review" | "closed";
 type Severity = "low" | "medium" | "high" | "critical";
@@ -21,6 +23,8 @@ type Issue = {
   completed_at: string | null;
   actual_duration_days: number | null;
 };
+
+const ISSUES_PER_PAGE = 10;
 
 const STATUSES: Status[] = [
   "open",
@@ -65,6 +69,8 @@ export default function MyIssues() {
   const [statusFilter, setStatusFilter] = useState("all");
   const [severityFilter, setSeverityFilter] = useState("all");
   const [priorityFilter, setPriorityFilter] = useState("all");
+
+  const [currentPage, setCurrentPage] = useState(1);
 
   useEffect(() => {
     api
@@ -114,6 +120,40 @@ export default function MyIssues() {
     severityFilter,
     priorityFilter,
   ]);
+
+  // Calculate the total number of pages after filtering.
+  const totalPages = Math.max(
+    1,
+    Math.ceil(filteredIssues.length / ISSUES_PER_PAGE)
+  );
+
+  // Get only the issues for the current page.
+  const paginatedIssues = useMemo(
+    () =>
+      filteredIssues.slice(
+        (currentPage - 1) * ISSUES_PER_PAGE,
+        currentPage * ISSUES_PER_PAGE
+      ),
+    [filteredIssues, currentPage]
+  );
+
+  // Return to page 1 whenever the search or filters change.
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [
+    search,
+    projectFilter,
+    statusFilter,
+    severityFilter,
+    priorityFilter,
+  ]);
+
+  // Keep the current page valid if the number of results decreases.
+  useEffect(() => {
+    if (currentPage > totalPages) {
+      setCurrentPage(totalPages);
+    }
+  }, [currentPage, totalPages]);
 
   async function handleStatusChange(
     issue: Issue,
@@ -238,82 +278,125 @@ export default function MyIssues() {
         {filteredIssues.length === 0 ? (
           <p>No issues match your filters.</p>
         ) : (
-          <div className="issues-table-wrapper">
-            <table className="issues-table">
-              <thead>
-                <tr>
-                  <th>Issue</th>
-                  <th>Project</th>
-                  <th>Status</th>
-                  <th>Severity</th>
-                  <th>Priority</th>
-                  <th>Created</th>
-                  <th>Estimated</th>
-                  <th>Due Date</th>
-                  <th>Actual Duration</th>
-                </tr>
-              </thead>
-
-              <tbody>
-                {filteredIssues.map((issue) => (
-                  <tr key={issue.id}>
-                    <td>
-                      <strong>
-                        #{issue.id} {issue.title}
-                      </strong>
-                      <p>{issue.description}</p>
-                    </td>
-
-                    <td>Project #{issue.project_id}</td>
-
-                    <td>
-                      <select
-                        value={issue.status}
-                        disabled={updatingId === issue.id}
-                        onChange={(event) =>
-                          handleStatusChange(
-                            issue,
-                            event.target.value as Status
-                          )
-                        }
-                        aria-label={`Update status for issue ${issue.id}`}
-                      >
-                        {STATUSES.map((status) => (
-                          <option key={status} value={status}>
-                            {formatLabel(status)}
-                          </option>
-                        ))}
-                      </select>
-
-                      {updatingId === issue.id && (
-                        <small> Saving...</small>
-                      )}
-                    </td>
-
-                    <td>{formatLabel(issue.severity)}</td>
-                    <td>{formatLabel(issue.priority)}</td>
-
-                    <td>{formatDate(issue.created_at)}</td>
-
-                    <td>
-                      {issue.estimated_duration_days != null
-                        ? `${issue.estimated_duration_days} day(s)`
-                        : "Not set"}
-                    </td>
-
-                    <td>{formatDate(issue.due_date)}</td>
-
-                    <td>
-                      {issue.status === "closed" &&
-                      issue.actual_duration_days != null
-                        ? `${issue.actual_duration_days} day(s)`
-                        : "Pending"}
-                    </td>
+          <>
+            <div className="issues-table-wrapper">
+              <table className="issues-table">
+                <thead>
+                  <tr>
+                    <th>Issue</th>
+                    <th>Project</th>
+                    <th>Status</th>
+                    <th>Severity</th>
+                    <th>Priority</th>
+                    <th>Created</th>
+                    <th>Estimated</th>
+                    <th>Due Date</th>
+                    <th>Actual Duration</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                </thead>
+
+                <tbody>
+                  {paginatedIssues.map((issue) => (
+                    <tr key={issue.id}>
+                      <td>
+                        <strong>
+                          #{issue.id} {issue.title}
+                        </strong>
+                        <p>{issue.description}</p>
+                      </td>
+
+                      <td>Project #{issue.project_id}</td>
+
+                      <td>
+                        <select
+                          value={issue.status}
+                          disabled={updatingId === issue.id}
+                          onChange={(event) =>
+                            handleStatusChange(
+                              issue,
+                              event.target.value as Status
+                            )
+                          }
+                          aria-label={`Update status for issue ${issue.id}`}
+                        >
+                          {STATUSES.map((status) => (
+                            <option key={status} value={status}>
+                              {formatLabel(status)}
+                            </option>
+                          ))}
+                        </select>
+
+                        {updatingId === issue.id && (
+                          <small> Saving...</small>
+                        )}
+                      </td>
+
+                      <td>{formatLabel(issue.severity)}</td>
+                      <td>{formatLabel(issue.priority)}</td>
+
+                      <td>{formatDate(issue.created_at)}</td>
+
+                      <td>
+                        {issue.estimated_duration_days != null
+                          ? `${issue.estimated_duration_days} day(s)`
+                          : "Not set"}
+                      </td>
+
+                      <td>{formatDate(issue.due_date)}</td>
+
+                      <td>
+                        {issue.status === "closed" &&
+                        issue.actual_duration_days != null
+                          ? `${issue.actual_duration_days} day(s)`
+                          : "Pending"}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            <div className="issues-pagination">
+              <span>
+                Showing{" "}
+                {(currentPage - 1) * ISSUES_PER_PAGE + 1}
+                {"–"}
+                {Math.min(
+                  currentPage * ISSUES_PER_PAGE,
+                  filteredIssues.length
+                )}{" "}
+                of {filteredIssues.length} issues
+              </span>
+
+              <div className="issues-pagination-controls">
+                <button
+                  type="button"
+                  disabled={currentPage === 1}
+                  onClick={() =>
+                    setCurrentPage((page) => Math.max(1, page - 1))
+                  }
+                >
+                  Previous
+                </button>
+
+                <span>
+                  Page {currentPage} of {totalPages}
+                </span>
+
+                <button
+                  type="button"
+                  disabled={currentPage >= totalPages}
+                  onClick={() =>
+                    setCurrentPage((page) =>
+                      Math.min(totalPages, page + 1)
+                    )
+                  }
+                >
+                  Next
+                </button>
+              </div>
+            </div>
+          </>
         )}
       </section>
     </main>

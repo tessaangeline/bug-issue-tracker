@@ -4,6 +4,8 @@ import { useNavigate, useParams } from "react-router-dom";
 import api from "../api/axios";
 import "./ProjectIssues.css";
 
+const ISSUES_PER_PAGE = 10;
+
 type Issue = {
   id: number;
   title: string;
@@ -47,9 +49,11 @@ export default function ProjectIssues() {
   const [issues, setIssues] = useState<Issue[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [severityFilter, setSeverityFilter] = useState("all");
+  const [currentPage, setCurrentPage] = useState(1);
 
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [creating, setCreating] = useState(false);
@@ -59,14 +63,16 @@ export default function ProjectIssues() {
   const [description, setDescription] = useState("");
   const [severity, setSeverity] = useState("medium");
   const [priority, setPriority] = useState("medium");
-  const [estimatedDurationDays, setEstimatedDurationDays] = useState("1");
+  const [estimatedDurationDays, setEstimatedDurationDays] =
+    useState("1");
 
   const [members, setMembers] = useState<ProjectMember[]>([]);
   const [assigneeId, setAssigneeId] = useState("");
   const [membersError, setMembersError] = useState("");
 
   const [project, setProject] = useState<ProjectDetails | null>(null);
-  const [projectDetailsLoading, setProjectDetailsLoading] = useState(true);
+  const [projectDetailsLoading, setProjectDetailsLoading] =
+    useState(true);
   const [projectDetailsError, setProjectDetailsError] = useState("");
 
   const fetchIssues = async () => {
@@ -79,6 +85,7 @@ export default function ProjectIssues() {
     setIssues(response.data);
   };
 
+  // Fetch issues whenever the project changes.
   useEffect(() => {
     setLoading(true);
     setError("");
@@ -86,12 +93,14 @@ export default function ProjectIssues() {
     fetchIssues()
       .catch((err) => {
         setError(
-          err.response?.data?.detail ?? "Could not load project issues."
+          err.response?.data?.detail ??
+            "Could not load project issues."
         );
       })
       .finally(() => setLoading(false));
   }, [projectId]);
 
+  // Fetch the members who can be assigned to an issue.
   useEffect(() => {
     if (!projectId) return;
 
@@ -103,11 +112,13 @@ export default function ProjectIssues() {
       })
       .catch((err) => {
         setMembersError(
-          err.response?.data?.detail ?? "Could not load project members."
+          err.response?.data?.detail ??
+            "Could not load project members."
         );
       });
   }, [projectId]);
 
+  // Fetch project overview and manager information.
   useEffect(() => {
     if (!projectId) {
       setProjectDetailsLoading(false);
@@ -124,7 +135,8 @@ export default function ProjectIssues() {
       })
       .catch((err) => {
         setProjectDetailsError(
-          err.response?.data?.detail ?? "Could not load project details."
+          err.response?.data?.detail ??
+            "Could not load project details."
         );
       })
       .finally(() => {
@@ -132,6 +144,7 @@ export default function ProjectIssues() {
       });
   }, [projectId]);
 
+  // Filter issues before applying pagination.
   const filteredIssues = issues.filter((issue) => {
     const matchesSearch =
       issue.title.toLowerCase().includes(search.toLowerCase()) ||
@@ -145,6 +158,30 @@ export default function ProjectIssues() {
 
     return matchesSearch && matchesStatus && matchesSeverity;
   });
+
+  // Calculate the number of pages from the filtered results.
+  const totalPages = Math.max(
+    1,
+    Math.ceil(filteredIssues.length / ISSUES_PER_PAGE)
+  );
+
+  // Display only the issues belonging to the current page.
+  const paginatedIssues = filteredIssues.slice(
+    (currentPage - 1) * ISSUES_PER_PAGE,
+    currentPage * ISSUES_PER_PAGE
+  );
+
+  // Reset pagination when the search, filters, or project changes.
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [search, statusFilter, severityFilter, projectId]);
+
+  // Keep the current page valid if issues are removed or filtered out.
+  useEffect(() => {
+    if (currentPage > totalPages) {
+      setCurrentPage(totalPages);
+    }
+  }, [currentPage, totalPages]);
 
   const handleCreateIssue = async (
     event: React.FormEvent<HTMLFormElement>
@@ -180,6 +217,8 @@ export default function ProjectIssues() {
         estimated_duration_days: duration,
       });
 
+      // Return to page 1 so the refreshed list starts at the beginning.
+      setCurrentPage(1);
       await fetchIssues();
 
       setTitle("");
@@ -199,7 +238,9 @@ export default function ProjectIssues() {
   };
 
   const formatLabel = (value: string) =>
-    value.replaceAll("_", " ").replace(/\b\w/g, (char) => char.toUpperCase());
+    value.replaceAll("_", " ").replace(/\b\w/g, (char) =>
+      char.toUpperCase()
+    );
 
   const formatDate = (value: string | null | undefined) => {
     if (!value) return "—";
@@ -252,7 +293,9 @@ export default function ProjectIssues() {
                 <div>
                   <span className="eyebrow">PROJECT OVERVIEW</span>
                   <h2>{project.name}</h2>
-                  <p>{project.description || "No description provided."}</p>
+                  <p>
+                    {project.description || "No description provided."}
+                  </p>
                 </div>
 
                 <span className="project-id-badge">
@@ -309,7 +352,7 @@ export default function ProjectIssues() {
             <div>
               <h2>Issues</h2>
               <p className="section-description">
-                {issues.length} total · {filteredIssues.length} shown
+                {issues.length} total · {filteredIssues.length} matching
               </p>
             </div>
 
@@ -476,7 +519,9 @@ export default function ProjectIssues() {
             </form>
           )}
 
-          {loading && <p className="issues-message">Loading issues...</p>}
+          {loading && (
+            <p className="issues-message">Loading issues...</p>
+          )}
 
           {!loading && error && (
             <p className="issues-error" role="alert">
@@ -487,7 +532,9 @@ export default function ProjectIssues() {
           {!loading && !error && filteredIssues.length === 0 && (
             <div className="issues-empty">
               <h3>
-                {issues.length === 0 ? "No issues yet" : "No matching issues"}
+                {issues.length === 0
+                  ? "No issues yet"
+                  : "No matching issues"}
               </h3>
               <p>
                 {issues.length === 0
@@ -498,77 +545,123 @@ export default function ProjectIssues() {
           )}
 
           {!loading && !error && filteredIssues.length > 0 && (
-            <div className="issues-table-wrapper">
-              <table className="issues-table">
-                <thead>
-                  <tr>
-                    <th>Issue</th>
-                    <th>Status</th>
-                    <th>Severity</th>
-                    <th>Priority</th>
-                    <th>Assignee</th>
-                    <th>Created</th>
-                    <th>Estimated</th>
-                    <th>Due Date</th>
-                    <th>Actual Duration</th>
-                  </tr>
-                </thead>
-
-                <tbody>
-                  {filteredIssues.map((issue) => (
-                    <tr key={issue.id}>
-                      <td>
-                        <strong>
-                          #{issue.id} {issue.title}
-                        </strong>
-                        <p className="issues-description">{issue.description}</p>
-                      </td>
-
-                      <td>
-                        <span
-                          className={`issue-badge status-${issue.status}`}
-                        >
-                          {formatLabel(issue.status)}
-                        </span>
-                      </td>
-
-                      <td>
-                        <span
-                          className={`issue-badge severity-${issue.severity}`}
-                        >
-                          {formatLabel(issue.severity)}
-                        </span>
-                      </td>
-
-                      <td>{formatLabel(issue.priority)}</td>
-
-                      <td>
-                        {issue.assignee_id === null
-                          ? "Unassigned"
-                          : `User #${issue.assignee_id}`}
-                      </td>
-
-                      <td>{formatDate(issue.created_at)}</td>
-
-                      <td>
-                        {issue.estimated_duration_days != null
-                          ? `${issue.estimated_duration_days} day(s)`
-                          : "Not set"}
-                      </td>
-
-                      <td>{formatDate(issue.due_date)}</td>
-
-                      <td>
-                        {issue.status === "closed" &&
-                        issue.actual_duration_days != null
-                          ? `${issue.actual_duration_days} day(s)`
-                          : "Pending"}
-                      </td>
+            <>
+              <div className="issues-table-wrapper">
+                <table className="issues-table">
+                  <thead>
+                    <tr>
+                      <th>Issue</th>
+                      <th>Status</th>
+                      <th>Severity</th>
+                      <th>Priority</th>
+                      <th>Assignee</th>
+                      <th>Created</th>
+                      <th>Estimated</th>
+                      <th>Due Date</th>
+                      <th>Actual Duration</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                  </thead>
+
+                  <tbody>
+                    {paginatedIssues.map((issue) => (
+                      <tr key={issue.id}>
+                        <td>
+                          <strong>
+                            #{issue.id} {issue.title}
+                          </strong>
+                          <p className="issues-description">
+                            {issue.description}
+                          </p>
+                        </td>
+
+                        <td>
+                          <span
+                            className={`issue-badge status-${issue.status}`}
+                          >
+                            {formatLabel(issue.status)}
+                          </span>
+                        </td>
+
+                        <td>
+                          <span
+                            className={`issue-badge severity-${issue.severity}`}
+                          >
+                            {formatLabel(issue.severity)}
+                          </span>
+                        </td>
+
+                        <td>{formatLabel(issue.priority)}</td>
+
+                        <td>
+                          {issue.assignee_id === null
+                            ? "Unassigned"
+                            : `User #${issue.assignee_id}`}
+                        </td>
+
+                        <td>{formatDate(issue.created_at)}</td>
+
+                        <td>
+                          {issue.estimated_duration_days != null
+                            ? `${issue.estimated_duration_days} day(s)`
+                            : "Not set"}
+                        </td>
+
+                        <td>{formatDate(issue.due_date)}</td>
+
+                        <td>
+                          {issue.status === "closed" &&
+                          issue.actual_duration_days != null
+                            ? `${issue.actual_duration_days} day(s)`
+                            : "Pending"}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+
+              {/* Pagination controls */}
+              <div className="issues-pagination">
+                <span>
+                  Showing{" "}
+                  {(currentPage - 1) * ISSUES_PER_PAGE + 1}
+                  {"–"}
+                  {Math.min(
+                    currentPage * ISSUES_PER_PAGE,
+                    filteredIssues.length
+                  )}{" "}
+                  of {filteredIssues.length} issues
+                </span>
+
+                <div className="issues-pagination-controls">
+                  <button
+                    type="button"
+                    disabled={currentPage === 1}
+                    onClick={() =>
+                      setCurrentPage((page) => Math.max(1, page - 1))
+                    }
+                  >
+                    Previous
+                  </button>
+
+                  <span>
+                    Page {currentPage} of {totalPages}
+                  </span>
+
+                  <button
+                    type="button"
+                    disabled={currentPage >= totalPages}
+                    onClick={() =>
+                      setCurrentPage((page) =>
+                        Math.min(totalPages, page + 1)
+                      )
+                    }
+                  >
+                    Next
+                  </button>
+                </div>
+              </div>
+            </>
           )}
         </section>
       </section>

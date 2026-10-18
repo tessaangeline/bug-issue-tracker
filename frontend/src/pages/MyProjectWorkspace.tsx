@@ -2,6 +2,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import api from "../api/axios";
+import "./MyIssues.css";
 
 type ProjectUser = {
   id: number;
@@ -47,6 +48,8 @@ const STATUSES: Status[] = [
 const SEVERITIES: Severity[] = ["low", "medium", "high", "critical"];
 const PRIORITIES: Priority[] = ["low", "medium", "high"];
 
+const ISSUES_PER_PAGE = 10;
+
 const formatLabel = (value: string) =>
   value.replaceAll("_", " ").replace(/\b\w/g, (char) =>
     char.toUpperCase()
@@ -65,6 +68,7 @@ const formatDate = (value: string | null | undefined) => {
 export default function MyProjectWorkspace() {
   const { projectId } = useParams<{ projectId: string }>();
   const navigate = useNavigate();
+
   const id = Number(projectId);
   const validId = Number.isInteger(id) && id > 0;
 
@@ -80,6 +84,9 @@ export default function MyProjectWorkspace() {
   const [severityFilter, setSeverityFilter] = useState("all");
   const [priorityFilter, setPriorityFilter] = useState("all");
 
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+
   useEffect(() => {
     if (!validId) {
       setError("Invalid project ID.");
@@ -88,6 +95,7 @@ export default function MyProjectWorkspace() {
     }
 
     let cancelled = false;
+
     setLoading(true);
     setError("");
 
@@ -99,6 +107,7 @@ export default function MyProjectWorkspace() {
         if (cancelled) return;
 
         setProject(projectResponse.data);
+
         setIssues(
           issuesResponse.data.filter((issue) => issue.project_id === id)
         );
@@ -120,6 +129,7 @@ export default function MyProjectWorkspace() {
     };
   }, [id, validId]);
 
+  // Apply search and filters before pagination
   const filteredIssues = useMemo(() => {
     const query = search.trim().toLowerCase();
 
@@ -137,6 +147,32 @@ export default function MyProjectWorkspace() {
       );
     });
   }, [issues, search, statusFilter, severityFilter, priorityFilter]);
+
+  // Calculate the number of pages
+  const totalPages = Math.max(
+    1,
+    Math.ceil(filteredIssues.length / ISSUES_PER_PAGE)
+  );
+
+  // Get only the issues for the current page
+  const paginatedIssues = useMemo(() => {
+    const startIndex = (currentPage - 1) * ISSUES_PER_PAGE;
+
+    return filteredIssues.slice(
+      startIndex,
+      startIndex + ISSUES_PER_PAGE
+    );
+  }, [filteredIssues, currentPage]);
+
+  // Reset to page 1 when the project or filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [search, statusFilter, severityFilter, priorityFilter, id]);
+
+  // Keep the current page valid if the result count decreases
+  useEffect(() => {
+    setCurrentPage((page) => Math.min(page, totalPages));
+  }, [totalPages]);
 
   async function handleStatusChange(issue: Issue, status: Status) {
     if (issue.status === status) return;
@@ -179,6 +215,7 @@ export default function MyProjectWorkspace() {
       <main className="dashboard-page">
         <section className="dashboard-content">
           <p role="alert">{error || "Project not found."}</p>
+
           <button onClick={() => navigate("/my-projects")}>
             Back to My Projects
           </button>
@@ -186,6 +223,16 @@ export default function MyProjectWorkspace() {
       </main>
     );
   }
+
+  const startItem =
+    filteredIssues.length === 0
+      ? 0
+      : (currentPage - 1) * ISSUES_PER_PAGE + 1;
+
+  const endItem = Math.min(
+    currentPage * ISSUES_PER_PAGE,
+    filteredIssues.length
+  );
 
   return (
     <main className="dashboard-page">
@@ -201,8 +248,11 @@ export default function MyProjectWorkspace() {
           <div className="welcome-text">
             <span className="eyebrow">MY PROJECT WORKSPACE</span>
             <h1>{project.name}</h1>
-            <p>{project.description || "No project description provided."}</p>
+            <p>
+              {project.description || "No project description provided."}
+            </p>
           </div>
+
           <div className="welcome-avatar">#{project.id}</div>
         </div>
 
@@ -212,6 +262,7 @@ export default function MyProjectWorkspace() {
           <div className="project-details-grid">
             <div className="project-info-block">
               <strong>Project Manager</strong>
+
               {project.manager ? (
                 <>
                   <p>{project.manager.name}</p>
@@ -224,6 +275,7 @@ export default function MyProjectWorkspace() {
 
             <div className="project-info-block">
               <strong>Team Members ({project.members.length})</strong>
+
               {project.members.length === 0 ? (
                 <p>No members listed.</p>
               ) : (
@@ -241,6 +293,7 @@ export default function MyProjectWorkspace() {
 
         <section className="dashboard-section">
           <h2>My Issues in This Project</h2>
+
           <p className="section-description">
             Issues assigned to you in {project.name}.
           </p>
@@ -266,6 +319,7 @@ export default function MyProjectWorkspace() {
               aria-label="Filter by status"
             >
               <option value="all">All statuses</option>
+
               {STATUSES.map((status) => (
                 <option key={status} value={status}>
                   {formatLabel(status)}
@@ -279,6 +333,7 @@ export default function MyProjectWorkspace() {
               aria-label="Filter by severity"
             >
               <option value="all">All severities</option>
+
               {SEVERITIES.map((severity) => (
                 <option key={severity} value={severity}>
                   {formatLabel(severity)}
@@ -292,6 +347,7 @@ export default function MyProjectWorkspace() {
               aria-label="Filter by priority"
             >
               <option value="all">All priorities</option>
+
               {PRIORITIES.map((priority) => (
                 <option key={priority} value={priority}>
                   {formatLabel(priority)}
@@ -308,76 +364,116 @@ export default function MyProjectWorkspace() {
           {filteredIssues.length === 0 ? (
             <p>No assigned issues match your filters in this project.</p>
           ) : (
-            <div className="issues-table-wrapper">
-              <table className="issues-table">
-                <thead>
-                  <tr>
-                    <th>Issue</th>
-                    <th>Status</th>
-                    <th>Severity</th>
-                    <th>Priority</th>
-                    <th>Created</th>
-                    <th>Estimated</th>
-                    <th>Due Date</th>
-                    <th>Actual Duration</th>
-                  </tr>
-                </thead>
-
-                <tbody>
-                  {filteredIssues.map((issue) => (
-                    <tr key={issue.id}>
-                      <td>
-                        <strong>
-                          #{issue.id} {issue.title}
-                        </strong>
-                        <p>{issue.description}</p>
-                      </td>
-
-                      <td>
-                        <select
-                          value={issue.status}
-                          disabled={updatingId === issue.id}
-                          aria-label={`Update status for issue ${issue.id}`}
-                          onChange={(event) =>
-                            handleStatusChange(
-                              issue,
-                              event.target.value as Status
-                            )
-                          }
-                        >
-                          {STATUSES.map((status) => (
-                            <option key={status} value={status}>
-                              {formatLabel(status)}
-                            </option>
-                          ))}
-                        </select>
-
-                        {updatingId === issue.id && <small> Saving...</small>}
-                      </td>
-
-                      <td>{formatLabel(issue.severity)}</td>
-                      <td>{formatLabel(issue.priority)}</td>
-                      <td>{formatDate(issue.created_at)}</td>
-
-                      <td>
-                        {issue.estimated_duration_days != null
-                          ? `${issue.estimated_duration_days} day(s)`
-                          : "Not set"}
-                      </td>
-
-                      <td>{formatDate(issue.due_date)}</td>
-
-                      <td>
-                        {issue.status === "closed" &&
-                        issue.actual_duration_days != null
-                          ? `${issue.actual_duration_days} day(s)`
-                          : "Pending"}
-                      </td>
+            <>
+              <div className="issues-table-wrapper">
+                <table className="issues-table">
+                  <thead>
+                    <tr>
+                      <th>Issue</th>
+                      <th>Status</th>
+                      <th>Severity</th>
+                      <th>Priority</th>
+                      <th>Created</th>
+                      <th>Estimated</th>
+                      <th>Due Date</th>
+                      <th>Actual Duration</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                  </thead>
+
+                  <tbody>
+                    {paginatedIssues.map((issue) => (
+                      <tr key={issue.id}>
+                        <td>
+                          <strong>
+                            #{issue.id} {issue.title}
+                          </strong>
+                          <p>{issue.description}</p>
+                        </td>
+
+                        <td>
+                          <select
+                            value={issue.status}
+                            disabled={updatingId === issue.id}
+                            aria-label={`Update status for issue ${issue.id}`}
+                            onChange={(event) =>
+                              handleStatusChange(
+                                issue,
+                                event.target.value as Status
+                              )
+                            }
+                          >
+                            {STATUSES.map((status) => (
+                              <option key={status} value={status}>
+                                {formatLabel(status)}
+                              </option>
+                            ))}
+                          </select>
+
+                          {updatingId === issue.id && (
+                            <small> Saving...</small>
+                          )}
+                        </td>
+
+                        <td>{formatLabel(issue.severity)}</td>
+                        <td>{formatLabel(issue.priority)}</td>
+                        <td>{formatDate(issue.created_at)}</td>
+
+                        <td>
+                          {issue.estimated_duration_days != null
+                            ? `${issue.estimated_duration_days} day(s)`
+                            : "Not set"}
+                        </td>
+
+                        <td>{formatDate(issue.due_date)}</td>
+
+                        <td>
+                          {issue.status === "closed" &&
+                          issue.actual_duration_days != null
+                            ? `${issue.actual_duration_days} day(s)`
+                            : "Pending"}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+
+              {/* Pagination controls */}
+              <div className="issues-pagination">
+                <span>
+                  Showing {startItem}–{endItem} of {filteredIssues.length}{" "}
+                  issues
+                </span>
+
+                <div className="issues-pagination-controls">
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setCurrentPage((page) => Math.max(1, page - 1))
+                    }
+                    disabled={currentPage === 1}
+                  >
+                    Previous
+                  </button>
+
+                  <span>
+                    Page {currentPage} of {totalPages}
+                  </span>
+
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setCurrentPage((page) =>
+                        Math.min(totalPages, page + 1)
+                      )
+                    }
+                    disabled={currentPage === totalPages}
+                  >
+                    Next
+                  </button>
+                </div>
+              </div>
+            </>
           )}
         </section>
       </section>
