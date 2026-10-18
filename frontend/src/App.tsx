@@ -7,6 +7,9 @@ import "./dashboard.css";
 import ManagerProjects from "./pages/ManagerProjects";
 import ProjectIssues from "./pages/ProjectIssues";
 import MyIssues from "./pages/MyIssues";
+import MyProjects from "./pages/MyProjects";
+import MyProjectWorkspace from "./pages/MyProjectWorkspace";
+
 
 import {
   BrowserRouter,
@@ -156,21 +159,32 @@ return (
 )}
 
 {user.role === "project_member" && (
-  <button
-    className="action-card"
-    onClick={() => navigate("/my-issues")}
-  >
-    <span className="action-icon">☑</span>
-    <span className="action-title">My Issues</span>
-    <span className="action-description">
-      View issues assigned to you and track their progress.
-    </span>
-    <span className="action-link">
-      Open my issues →
-    </span>
-  </button>
-)}
+  <>
+    <button
+      className="action-card"
+      onClick={() => navigate("/my-projects")}
+    >
+      <span className="action-icon">▦</span>
+      <span className="action-title">My Projects</span>
+      <span className="action-description">
+        Explore your projects, team members, and assigned work.
+      </span>
+      <span className="action-link">Open my projects →</span>
+    </button>
 
+    <button
+      className="action-card"
+      onClick={() => navigate("/my-issues")}
+    >
+      <span className="action-icon">☑</span>
+      <span className="action-title">My Issues</span>
+      <span className="action-description">
+        See all your assigned issues across projects.
+      </span>
+      <span className="action-link">Open my issues →</span>
+    </button>
+  </>
+)}
 
           <button className="action-card logout-card" onClick={handleLogout}>
             <span className="action-icon">↗</span>
@@ -327,6 +341,56 @@ function ProtectedMyIssues() {
   return <MyIssues />;
 }
 
+function ProtectedMyProjects() {
+  const [allowed, setAllowed] = useState<boolean | null>(null);
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    api
+      .get<User>("/users/me")
+      .then((response) => {
+        if (response.data.role === "project_member") {
+          setAllowed(true);
+        } else {
+          setAllowed(false);
+          navigate("/", { replace: true });
+        }
+      })
+      .catch(() => navigate("/login", { replace: true }));
+  }, [navigate]);
+
+  if (allowed !== true) {
+    return <p>Checking permissions...</p>;
+  }
+
+  return <MyProjects />;
+}
+
+function ProtectedMyProjectWorkspace() {
+  const [allowed, setAllowed] = useState<boolean | null>(null);
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    api
+      .get<User>("/users/me")
+      .then((response) => {
+        if (response.data.role === "project_member") {
+          setAllowed(true);
+        } else {
+          setAllowed(false);
+          navigate("/", { replace: true });
+        }
+      })
+      .catch(() => navigate("/login", { replace: true }));
+  }, [navigate]);
+
+  if (allowed !== true) {
+    return <p>Checking permissions...</p>;
+  }
+
+  return <MyProjectWorkspace />;
+}
+
 function App() {
   return (
     <BrowserRouter>
@@ -339,6 +403,8 @@ function App() {
         <Route path="/manager/projects" element={<ProtectedManagerProjects />} />
         <Route path="/manager/projects/:projectId" element={<ProtectedProjectIssues />} />
         <Route path="/my-issues" element={<ProtectedMyIssues />} />
+        <Route path="/my-projects" element={<ProtectedMyProjects />} />
+        <Route path="/my-projects/:projectId" element={<ProtectedMyProjectWorkspace />} />
       </Routes>
     </BrowserRouter>
   );

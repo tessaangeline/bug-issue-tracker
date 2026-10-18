@@ -38,6 +38,13 @@ def get_visible_projects(
             current_user.id,
         )
 
+    if current_user.role == UserRole.PROJECT_MEMBER:
+        return [
+            project
+            for project in project_repository.get_projects(db)
+            if current_user.id in (project.member_ids or [])
+        ]
+
     raise HTTPException(
         status_code=403,
         detail="You do not have permission to view projects",
@@ -106,11 +113,17 @@ def get_project_details(
         )
 
     if current_user.role == UserRole.PROJECT_MANAGER:
-
         if project.manager_id != current_user.id:
             raise HTTPException(
                 status_code=403,
                 detail="You do not manage this project",
+            )
+
+    elif current_user.role == UserRole.PROJECT_MEMBER:
+        if current_user.id not in (project.member_ids or []):
+            raise HTTPException(
+                status_code=403,
+                detail="You are not a member of this project",
             )
 
     elif current_user.role != UserRole.SUPER_ADMIN:
