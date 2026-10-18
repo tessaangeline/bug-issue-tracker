@@ -5,7 +5,7 @@ import Projects from "./pages/Projects";
 import Users from "./pages/Users";
 import "./dashboard.css";
 import ManagerProjects from "./pages/ManagerProjects";
-import ProjectIssues from "./pages/ProjectIssue";
+import ProjectIssues from "./pages/ProjectIssues";
 import MyIssues from "./pages/MyIssues";
 
 import {

@@ -20,6 +20,10 @@ export default function Users() {
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
   const [role, setRole] = useState("project_member");
+  const [toast, setToast] = useState<{
+  type: "success" | "error";
+  text: string;
+} | null>(null);
 
   async function fetchUsers() {
     try {
@@ -43,29 +47,44 @@ export default function Users() {
     setCreating(true);
 
     try {
-      await api.post("/users/", {
-        name: name.trim(),
-        email: email.trim(),
-        password,
-        role,
-      });
+  await api.post("/users/", {
+    name,
+    email,
+    password,
+    role,
+  });
 
       setName("");
       setEmail("");
       setPassword("");
       setRole("project_member");
       setMessage("User created successfully!");
+      setToast({
+        type: "success",
+        text: "User created successfully!",
+    });
 
       await fetchUsers();
-    } catch (err: any) {
-      setError(
-        err.response?.data?.detail ||
-          "Couldn't create user. Please check the details and try again."
-      );
-    } finally {
-      setCreating(false);
-    }
+  } catch (err: any) {
+
+    console.log("Create user error:", err.response?.data);
+    const detail = err.response?.data?.detail;
+
+    const errorMessage =
+      typeof detail === "string"
+        ? detail
+        : "Couldn't create user. Please check the details and try again.";
+
+    setError(errorMessage);
+setToast({
+  type: "error",
+  text: errorMessage,
+});
+
+  } finally {
+    setCreating(false);
   }
+}
 
   function formatRole(role: string) {
     if (role === "super_admin") return "Super Admin";
@@ -74,12 +93,33 @@ export default function Users() {
 
   return (
     <main className="users-page">
+        {toast && (
+  <div
+    className={`toast toast-${toast.type}`}
+    role={toast.type === "error" ? "alert" : "status"}
+  >
+    <span>{toast.type === "success" ? "✓" : "⚠"}</span>
+    <span>{toast.text}</span>
+
+    <button
+      type="button"
+      className="toast-close"
+      onClick={() => setToast(null)}
+      aria-label="Dismiss notification"
+    >
+      ×
+    </button>
+  </div>
+)}
+
       <header className="users-header">
         <div className="users-heading">
           <span className="eyebrow">BUGTRACKER · ADMINISTRATION</span>
           <h1>User Management</h1>
           <p>Create accounts and manage access to your workspace.</p>
         </div>
+
+
 
         <div className="users-count">
           <span>Total users</span>

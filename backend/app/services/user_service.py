@@ -1,4 +1,5 @@
 from sqlalchemy.orm import Session
+from fastapi import HTTPException
 
 from backend.app.models.user import User, UserRole
 from backend.app.repositories import user_repository
@@ -7,6 +8,15 @@ from backend.app.security import hash_password, verify_password, create_access_t
 
 
 def create_user(db: Session, user_data: UserCreate) -> User:
+
+    existing_user = user_repository.get_by_email(db, user_data.email)
+
+    if existing_user:
+        raise HTTPException(
+            status_code=400,
+            detail="A user with this email already exists.",
+        )
+
     hashed_password = hash_password(user_data.password)
 
     new_user = User(

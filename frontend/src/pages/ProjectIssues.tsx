@@ -21,6 +21,20 @@ type ProjectMember = {
   email: string;
 };
 
+type ProjectUser = {
+  id: number;
+  name: string;
+  email: string;
+};
+
+type ProjectDetails = {
+  id: number;
+  name: string;
+  description: string | null;
+  manager: ProjectUser | null;
+  members: ProjectUser[];
+};
+
 export default function ProjectIssues() {
   const { projectId } = useParams<{ projectId: string }>();
   const navigate = useNavigate();
@@ -43,6 +57,10 @@ const [priority, setPriority] = useState("medium");
 const [members, setMembers] = useState<ProjectMember[]>([]);
 const [assigneeId, setAssigneeId] = useState("");
 const [membersError, setMembersError] = useState("");
+
+const [project, setProject] = useState<ProjectDetails | null>(null);
+const [projectDetailsLoading, setProjectDetailsLoading] = useState(true);
+const [projectDetailsError, setProjectDetailsError] = useState("");
 
 const fetchIssues = async () => {
   if (!projectId) return;
@@ -80,6 +98,31 @@ useEffect(() => {
       setMembersError(
         err.response?.data?.detail ?? "Could not load project members."
       );
+    });
+}, [projectId]);
+
+useEffect(() => {
+  if (!projectId) {
+    setProjectDetailsLoading(false);
+    return;
+  }
+
+  setProjectDetailsLoading(true);
+  setProjectDetailsError("");
+
+  api
+    .get<ProjectDetails>(`/projects/${projectId}/details`)
+    .then((response) => {
+      setProject(response.data);
+    })
+    .catch((err) => {
+      setProjectDetailsError(
+        err.response?.data?.detail ??
+          "Could not load project details."
+      );
+    })
+    .finally(() => {
+      setProjectDetailsLoading(false);
     });
 }, [projectId]);
 
@@ -164,6 +207,75 @@ useEffect(() => {
           </div>
           <div className="welcome-avatar">⚑</div>
         </div>
+
+
+<section className="project-details-card">
+  {projectDetailsLoading ? (
+    <p>Loading project details...</p>
+  ) : projectDetailsError ? (
+    <p className="issues-error" role="alert">
+      {projectDetailsError}
+    </p>
+  ) : project ? (
+    <>
+      <div className="project-details-heading">
+        <div>
+          <span className="eyebrow">PROJECT OVERVIEW</span>
+          <h2>{project.name}</h2>
+          <p>
+            {project.description || "No description provided."}
+          </p>
+        </div>
+
+        <span className="project-id-badge">
+          Project #{project.id}
+        </span>
+      </div>
+
+      <div className="project-details-grid">
+        <div className="project-info-block">
+          <h3>Project Manager</h3>
+
+          {project.manager ? (
+            <>
+              <strong>{project.manager.name}</strong>
+              <p>{project.manager.email}</p>
+            </>
+          ) : (
+            <p>Manager details unavailable.</p>
+          )}
+        </div>
+
+        <div className="project-info-block">
+          <div className="project-members-heading">
+            <h3>Team Members</h3>
+            <span>{project.members.length}</span>
+          </div>
+
+          {project.members.length > 0 ? (
+            <div className="project-members-list">
+              {project.members.map((member) => (
+                <div className="project-member" key={member.id}>
+                  <span className="project-member-avatar">
+                    {member.name.trim().charAt(0).toUpperCase()}
+                  </span>
+
+                  <div>
+                    <strong>{member.name}</strong>
+                    <p>{member.email}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p>No team members assigned yet.</p>
+          )}
+        </div>
+      </div>
+    </>
+  ) : null}
+</section>
+
 
         <section className="dashboard-section">
           <div className="issues-heading">

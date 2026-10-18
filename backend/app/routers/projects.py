@@ -89,3 +89,71 @@ def get_project_members(
         }
         for member in members
     ]
+
+
+@router.get("/{project_id}/details")
+def get_project_details(
+    project_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    project = project_repository.get_project_by_id(db, project_id)
+
+    if project is None:
+        raise HTTPException(
+            status_code=404,
+            detail="Project not found",
+        )
+
+    if current_user.role == UserRole.PROJECT_MANAGER:
+
+        if project.manager_id != current_user.id:
+            raise HTTPException(
+                status_code=403,
+                detail="You do not manage this project",
+            )
+
+    elif current_user.role != UserRole.SUPER_ADMIN:
+        raise HTTPException(
+            status_code=403,
+            detail="You do not have permission to view this project",
+        )
+
+    manager = (
+        db.query(User)
+        .filter(User.id == project.manager_id)
+        .first()
+    )
+
+    member_ids = project.member_ids or []
+
+    members = (
+        db.query(User)
+        .filter(
+            User.id.in_(member_ids),
+            User.role == UserRole.PROJECT_MEMBER,
+        )
+        .all()
+    )
+    return {
+        "id": project.id,
+        "name": project.name,
+        "description": project.description,
+        "manager": (
+            {
+                "id": manager.id,
+                "name": manager.name,
+                "email": manager.email,
+            }
+            if manager
+            else None
+        ),
+        "members": [
+            {
+                "id": member.id,
+                "name": member.name,
+                "email": member.email,
+            }
+            for member in members
+        ],
+    }

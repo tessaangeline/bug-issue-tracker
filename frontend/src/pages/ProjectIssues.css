@@ -274,3 +274,117 @@
 }
 
 
+.project-details-card {
+  margin: 28px 0 36px;
+  padding: 28px;
+  border: 1px solid #303343;
+  border-radius: 18px;
+  background: #191b25;
+}
+
+.project-details-heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 20px;
+  padding-bottom: 24px;
+  border-bottom: 1px solid #303343;
+}
+
+.project-details-heading h2 {
+  margin: 10px 0;
+  font-size: 28px;
+}
+
+.project-details-heading p,
+.project-info-block p {
+  color: #9ca3b4;
+  overflow-wrap: anywhere;
+}
+
+.project-id-badge {
+  flex-shrink: 0;
+  padding: 9px 14px;
+  border: 1px solid #494064;
+  border-radius: 20px;
+  background: #252137;
+  color: #c4b5fd;
+}
+
+.project-details-grid {
+  display: grid;
+  grid-template-columns: 1fr 1.4fr;
+  gap: 24px;
+  padding-top: 24px;
+}
+
+.project-info-block {
+  min-width: 0;
+  padding: 20px;
+  border: 1px solid #303343;
+  border-radius: 12px;
+  background: #151720;
+}
+
+.project-info-block h3 {
+  margin: 0 0 16px;
+  font-size: 17px;
+}
+
+.project-members-heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+
+.project-members-heading span {
+  padding: 4px 10px;
+  border-radius: 14px;
+  background: #30274d;
+  color: #c4b5fd;
+}
+
+.project-members-list {
+  display: grid;
+  gap: 16px;
+}
+
+.project-member {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+
+.project-member-avatar {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: #30274d;
+  color: #c4b5fd;
+  font-weight: 700;
+}
+
+.project-member p {
+  margin: 5px 0 0;
+  font-size: 13px;
+}
+
+@media (max-width: 700px) {
+  .project-details-card {
+    padding: 18px;
+  }
+
+  .project-details-heading {
+    flex-direction: column;
+  }
+
+  .project-details-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
