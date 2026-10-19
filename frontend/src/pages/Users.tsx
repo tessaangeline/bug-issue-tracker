@@ -1,5 +1,6 @@
 
 import { useEffect, useMemo, useState, type FormEvent } from "react";
+import { useNavigate } from "react-router-dom";
 import api from "../api/axios";
 import "./Users.css";
 
@@ -21,6 +22,7 @@ const USERS_PER_PAGE = 10;
 
 export default function Users() {
   const [users, setUsers] = useState<User[]>([]);
+  const navigate = useNavigate();
 
   // Create user form
   const [name, setName] = useState("");
@@ -122,7 +124,7 @@ export default function Users() {
     }
   }
 
-  // Start editing a user
+  // start editing a user
   function startEditing(user: User) {
     if (
       user.role !== "project_member" &&
@@ -212,6 +214,18 @@ export default function Users() {
     }
   }
 
+  function handleLogout() {
+    api
+      .post("/auth/logout")
+      .catch((error) => {
+        console.error("Logout request failed:", error);
+      })
+      .finally(() => {
+        sessionStorage.removeItem("access_token");
+        sessionStorage.removeItem("refresh_token");
+        navigate("/login", { replace: true });
+      }); 
+  }
   function formatRole(userRole: string) {
     if (userRole === "super_admin") return "Super Admin";
 
@@ -269,6 +283,24 @@ export default function Users() {
 
   return (
     <main className="users-page">
+      <header className="users-topbar">
+        <div className="users-brand">
+          <div className="users-brand-icon">B</div>
+          <span>BugTracker</span>
+        </div>
+
+        <div className="users-topbar-right">
+          <span className="users-role-badge">Administrator</span>
+
+          <button
+            type="button"
+            className="signout-button"
+            onClick={handleLogout}
+          >
+            Sign out ↗
+          </button>
+        </div>
+      </header>
       {toast && (
         <div
           className={`toast toast-${toast.type}`}

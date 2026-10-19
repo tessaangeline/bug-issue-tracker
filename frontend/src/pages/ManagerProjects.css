@@ -1,119 +1,194 @@
 
+/* Back to dashboard */
 .manager-back-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
   margin-bottom: 22px;
-  padding: 8px 0;
+  padding: 9px 0;
   border: none;
   background: transparent;
-  color: #b7aaff;
+  color: #0d5264;
   font: inherit;
+  font-size: 13px;
+  font-weight: 700;
   cursor: pointer;
+  transition: color 0.2s, transform 0.2s;
 }
 
+.manager-back-button:hover {
+  color: #087b8c;
+  transform: translateX(-2px);
+}
+
+/* Welcome section */
 .manager-projects-welcome {
   margin-top: 8px;
 }
 
+/* Projects grid */
 .manager-project-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 20px;
+  gap: 22px;
   margin-top: 22px;
 }
 
+/* Individual project card */
 .manager-project-card {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  padding: 24px;
-  border: 1px solid #2e3240;
-  border-radius: 16px;
-  background: #191c25;
-  color: #f1f3f9;
-  transition: border-color 0.2s, transform 0.2s;
+  min-width: 0;
+  padding: 25px;
+  border: 1px solid #e0e6eb;
+  border-radius: 15px;
+  background: #ffffff;
+  color: #252a45;
+  box-shadow: 0 4px 14px rgba(37, 42, 69, 0.05);
+  transition:
+    border-color 0.2s,
+    transform 0.2s,
+    box-shadow 0.2s;
 }
 
 .manager-project-card:hover {
   transform: translateY(-3px);
-  border-color: #7664d6;
+  border-color: #b8d5dc;
+  box-shadow: 0 9px 22px rgba(37, 42, 69, 0.09);
 }
 
+/* Project icon */
 .manager-project-card-icon {
   display: grid;
   place-items: center;
-  width: 42px;
-  height: 42px;
+  width: 44px;
+  height: 44px;
   border-radius: 12px;
-  background: #30294d;
-  color: #c5b9ff;
+  background: #e5f0f3;
+  color: #0d5264;
   font-size: 24px;
 }
 
+/* Project name */
 .manager-project-card h3 {
   margin: 18px 0 8px;
+  color: #252a45;
   font-size: 19px;
+  font-weight: 700;
+  overflow-wrap: anywhere;
 }
 
+/* Project description */
 .manager-project-description {
   min-height: 44px;
   margin: 0;
-  color: #a0a8b8;
+  color: #778092;
   font-size: 14px;
   line-height: 1.6;
+  overflow-wrap: anywhere;
 }
 
+/* Member count */
 .manager-project-meta {
+  display: flex;
+  align-items: center;
   margin-top: 18px;
-  color: #b7aaff;
+  color: #0d5264;
   font-size: 13px;
+  font-weight: 700;
 }
 
+.manager-project-meta span {
+  display: inline-flex;
+  align-items: center;
+  padding: 7px 11px;
+  border-radius: 8px;
+  background: #eaf2f5;
+}
+
+/* Open project button */
 .manager-project-open {
   width: 100%;
   margin-top: 22px;
-  padding: 11px 14px;
-  border: 1px solid #55468e;
+  padding: 12px 14px;
+  border: 1px solid #0d5264;
   border-radius: 9px;
-  background: #30294d;
-  color: #ded7ff;
+  background: #0d5264;
+  color: #ffffff;
   font: inherit;
-  font-weight: 600;
+  font-size: 13px;
+  font-weight: 700;
   cursor: pointer;
+  transition: background 0.2s, box-shadow 0.2s, transform 0.2s;
 }
 
 .manager-project-open:hover {
-  background: #403563;
+  background: #094453;
+  box-shadow: 0 4px 10px rgba(13, 82, 100, 0.16);
+  transform: translateY(-1px);
 }
 
+.manager-project-open:focus-visible,
+.manager-back-button:focus-visible {
+  outline: 3px solid rgba(13, 132, 149, 0.3);
+  outline-offset: 3px;
+}
+
+/* Loading message */
 .manager-projects-message {
   margin-top: 24px;
-  color: #a0a8b8;
+  color: #778092;
+  font-size: 14px;
 }
 
+/* Error message */
 .manager-projects-error {
   margin-top: 24px;
-  color: #ffb3bb;
+  padding: 13px 16px;
+  border: 1px solid #f0c9cd;
+  border-radius: 9px;
+  background: #fff0f0;
+  color: #a42c36;
+  font-size: 14px;
 }
 
+/* Empty state */
 .manager-projects-empty {
   margin-top: 22px;
-  padding: 28px;
-  border: 1px dashed #39314f;
-  border-radius: 16px;
-  background: #191c25;
+  padding: 36px 28px;
+  border: 1px dashed #cbd5df;
+  border-radius: 15px;
+  background: #ffffff;
+  color: #252a45;
 }
 
 .manager-projects-empty h3 {
   margin-top: 0;
+  color: #252a45;
+  font-size: 17px;
 }
 
 .manager-projects-empty p {
   margin-bottom: 0;
-  color: #a0a8b8;
+  color: #778092;
+  font-size: 14px;
   line-height: 1.6;
 }
 
-@media (max-width: 600px) {
+/* Responsive layout */
+@media (max-width: 800px) {
   .manager-project-grid {
     grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 600px) {
+  .manager-project-card {
+    padding: 20px;
+  }
+
+  .manager-projects-empty {
+    padding: 25px 20px;
   }
 }

@@ -2,54 +2,56 @@
 .dashboard-page {
   min-height: 100vh;
   padding: 0 6% 40px;
-  box-sizing: border-box;
-  background: #101218;
-  color: #f1f3f9;
+  background: var(--page-bg);
+  color: var(--text-primary);
 }
 
 .dashboard-topbar {
-  max-width: 1100px;
-  height: 78px;
+  max-width: 1200px;
+  min-height: 76px;
   margin: 0 auto;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  border-bottom: 1px solid #292d39;
+  gap: 16px;
+  border-bottom: 1px solid var(--border);
 }
 
 .brand {
   display: flex;
   align-items: center;
   gap: 11px;
-  font-size: 19px;
-  font-weight: 700;
+  font-size: 20px;
+  font-weight: 750;
   letter-spacing: -0.4px;
+  color: var(--text-primary);
 }
 
 .brand-icon {
-  width: 36px;
-  height: 36px;
+  width: 38px;
+  height: 38px;
   display: grid;
   place-items: center;
-  border-radius: 11px;
-  background: #7965e8;
-  color: white;
+  border-radius: 12px;
+  background: var(--accent);
+  color: #fff;
   font-size: 21px;
+  box-shadow: 0 4px 10px rgb(15 100 116 / 16%);
 }
 
 .admin-badge {
   padding: 7px 12px;
-  border: 1px solid #41365f;
+  border: 1px solid #cde8e8;
   border-radius: 20px;
-  background: #29223d;
-  color: #c5b9ff;
+  background: #eaf7f6;
+  color: #0f6474;
   font-size: 12px;
-  font-weight: 600;
+  font-weight: 650;
 }
 
 .dashboard-content {
-  max-width: 1100px;
-  margin: 40px auto 0;
+  max-width: 1200px;
+  margin: 32px auto 0;
 }
 
 .welcome-card {
@@ -57,29 +59,32 @@
   align-items: center;
   justify-content: space-between;
   gap: 24px;
-  padding: 38px;
-  border: 1px solid #39314f;
+  padding: 36px;
+  border: 1px solid var(--border);
   border-radius: 20px;
-  background: linear-gradient(120deg, #252039, #191c27 75%);
+  background: linear-gradient(120deg, #ffffff, #f0f8f8);
+  box-shadow: 0 5px 18px rgb(15 23 42 / 4%);
 }
 
 .eyebrow {
-  color: #b4a5ff;
+  color: var(--accent);
   font-size: 12px;
-  font-weight: 700;
-  letter-spacing: 1.8px;
+  font-weight: 750;
+  letter-spacing: 1.6px;
 }
 
 .welcome-text h1 {
   margin: 12px 0;
-  font-size: clamp(30px, 4vw, 44px);
-  letter-spacing: -1.5px;
+  color: var(--text-primary);
+  font-size: clamp(30px, 4vw, 42px);
+  letter-spacing: -1.3px;
+  line-height: 1.2;
 }
 
 .welcome-text p {
   max-width: 520px;
   margin: 0;
-  color: #a5adbd;
+  color: var(--text-secondary);
   line-height: 1.7;
 }
 
@@ -89,26 +94,27 @@
   flex-shrink: 0;
   display: grid;
   place-items: center;
-  border: 1px solid #61528e;
+  border: 1px solid #cde8e8;
   border-radius: 22px;
-  background: #393052;
-  color: #ded7ff;
+  background: #eaf7f6;
+  color: var(--accent);
   font-size: 32px;
-  font-weight: 700;
+  font-weight: 750;
 }
 
 .dashboard-section {
-  margin-top: 38px;
+  margin-top: 34px;
 }
 
 .dashboard-section h2 {
   margin: 0 0 8px;
+  color: var(--text-primary);
   font-size: 23px;
 }
 
 .section-description {
   margin: 0;
-  color: #969eaf;
+  color: var(--text-secondary);
   font-size: 14px;
 }
 
@@ -126,104 +132,82 @@
   flex-direction: column;
   align-items: flex-start;
   gap: 12px;
-  border: 1px solid #2e3240;
+  border: 1px solid var(--border);
   border-radius: 16px;
-  background: #191c25;
-  color: #f1f3f9;
+  background: var(--surface);
+  color: var(--text-primary);
   text-align: left;
   font: inherit;
-  cursor: pointer;
-  transition: border-color 0.2s, background 0.2s, transform 0.2s;
+  transition: border-color 0.2s, box-shadow 0.2s, transform 0.2s;
 }
 
 .action-card:hover {
   transform: translateY(-3px);
-  border-color: #7664d6;
-  background: #1e202c;
+  border-color: #a6d5d8;
+  box-shadow: 0 10px 24px rgb(15 23 42 / 7%);
 }
 
 .action-icon {
-  width: 40px;
-  height: 40px;
+  width: 42px;
+  height: 42px;
   display: grid;
   place-items: center;
   border-radius: 12px;
-  background: #30294d;
-  color: #c5b9ff;
+  background: #eaf7f6;
+  color: var(--accent);
   font-size: 24px;
 }
 
 .action-title {
+  color: var(--text-primary);
   font-size: 18px;
-  font-weight: 650;
+  font-weight: 700;
 }
 
 .action-description {
-  color: #a0a8b8;
+  color: var(--text-secondary);
   font-size: 14px;
   line-height: 1.6;
 }
 
 .action-link {
   margin-top: auto;
-  color: #b7aaff;
+  color: var(--accent);
   font-size: 13px;
-  font-weight: 600;
+  font-weight: 700;
 }
 
 .logout-card .action-icon {
-  background: #30272b;
-  color: #ffb3bb;
+  background: #fff1f2;
+  color: #be123c;
 }
 
 .logout-card:hover {
-  border-color: #8b515b;
+  border-color: #fecdd3;
 }
 
 .dashboard-footer {
-  margin-top: 40px;
+  margin-top: 36px;
   padding-top: 20px;
-  border-top: 1px solid #292d39;
-  color: #858da0;
+  border-top: 1px solid var(--border);
+  color: var(--text-secondary);
   font-size: 13px;
 }
 
 .dashboard-footer strong {
-  color: #cbd0dc;
-  font-weight: 500;
+  color: var(--text-primary);
+  font-weight: 600;
 }
-
-@media (max-width: 600px) {
-  .dashboard-page {
-    padding: 0 16px 28px;
-  }
-
-  .welcome-card {
-    padding: 24px;
-  }
-
-  .welcome-avatar {
-    width: 52px;
-    height: 52px;
-    border-radius: 15px;
-    font-size: 24px;
-  }
-
-  .dashboard-actions {
-    grid-template-columns: 1fr;
-  }
-}
-
 
 .back-button {
   border: none;
   background: transparent;
   padding: 8px 0;
   margin-bottom: 16px;
-  color: inherit;
+  color: var(--accent);
   cursor: pointer;
   font: inherit;
-  font-weight: 600;
+  font-weight: 650;
 }
 
 .project-details-grid {
@@ -234,10 +218,11 @@
 }
 
 .project-info-block {
-  padding: 20px;
-  border: 1px solid #e5e7eb;
-  border-radius: 12px;
   min-width: 0;
+  padding: 20px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--surface);
 }
 
 .project-info-block p {
@@ -262,8 +247,10 @@
   min-width: 150px;
   max-width: 100%;
   padding: 10px 12px;
-  border: 1px solid #d1d5db;
+  border: 1px solid var(--border);
   border-radius: 8px;
+  background: var(--surface);
+  color: var(--text-primary);
   font: inherit;
 }
 
@@ -272,17 +259,26 @@
 }
 
 .issue-update-error {
-  color: #b91c1c;
+  color: var(--danger);
 }
 
 @media (max-width: 600px) {
-  .issue-filters {
-    flex-direction: column;
+  .dashboard-page {
+    padding: 0 16px 28px;
   }
 
-  .issue-filters input,
-  .issue-filters select {
-    width: 100%;
-    box-sizing: border-box;
+  .welcome-card {
+    padding: 24px;
+  }
+
+  .welcome-avatar {
+    width: 52px;
+    height: 52px;
+    border-radius: 15px;
+    font-size: 24px;
+  }
+
+  .dashboard-actions {
+    grid-template-columns: 1fr;
   }
 }

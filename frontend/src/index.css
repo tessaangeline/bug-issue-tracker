@@ -6,11 +6,25 @@
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 
-  color: #f1f3f9;
-  background: #101218;
+  color: #1e293b;
+  background: #f4f6f9;
 
   font-size: 16px;
   line-height: 1.5;
+
+  --page-bg: #f4f6f9;
+  --surface: #ffffff;
+  --surface-muted: #f8fafc;
+  --text-primary: #1e293b;
+  --text-secondary: #64748b;
+  --border: #e2e8f0;
+  --accent: #0f6474;
+  --accent-hover: #0b5260;
+  --sidebar-bg: #172b3a;
+  --sidebar-text: #e2e8f0;
+  --success: #15803d;
+  --warning: #b45309;
+  --danger: #b91c1c;
 }
 
 * {
@@ -28,6 +42,8 @@ body,
 
 body {
   min-height: 100vh;
+  background: var(--page-bg);
+  color: var(--text-primary);
 }
 
 #root {
