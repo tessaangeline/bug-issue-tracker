@@ -30,7 +30,9 @@ export default function Projects() {
 
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+
   const [showForm, setShowForm] = useState(false);
+  const [editingProjectId, setEditingProjectId] = useState<number | null>(null);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
 
@@ -106,6 +108,7 @@ export default function Projects() {
     setManagerId("");
     setMemberIds([]);
     setMemberSearch("");
+    setEditingProjectId(null);
     setShowForm(false);
   }
 
@@ -121,6 +124,24 @@ export default function Projects() {
       return;
     }
 
+    const normalizedName = name.trim().toLowerCase();
+
+    if (
+      projects.some(
+        (project) =>
+          project.id !== editingProjectId &&
+          project.name.trim().toLowerCase() === normalizedName
+      )
+    ) {
+      setError("A project with this name already exists.");
+      return;
+    }
+
+    if (memberIds.length === 0) {
+      setError("Select at least one project member.");
+      return;
+    }
+
     if (!managerId) {
       setError("Select a project manager.");
       return;
@@ -129,16 +150,29 @@ export default function Projects() {
     setSaving(true);
 
     try {
-      await api.post("/projects/", {
+      const payload = {
         name: name.trim(),
         description: description.trim() || null,
         manager_id: Number(managerId),
         member_ids: memberIds,
-      });
+      };
+
+      if (editingProjectId !== null) {
+        await api.patch(`/projects/${editingProjectId}`, payload);
+      } else {
+        await api.post("/projects/", payload);
+      }
+
+      const wasEditing = editingProjectId !== null;
 
       resetForm();
-      setSuccess("Project created successfully.");
       await loadData();
+
+      setSuccess(
+        wasEditing
+          ? "Project updated successfully."
+          : "Project created successfully."
+      );
     } catch (err: any) {
       setError(
         err.response?.data?.detail ||
@@ -148,6 +182,52 @@ export default function Projects() {
       setSaving(false);
     }
   }
+
+  function handleEditProject(project: Project) {
+    setError("");
+    setSuccess("");
+
+    setEditingProjectId(project.id);
+    setName(project.name);
+    setDescription(project.description ?? "");
+    setManagerId(String(project.manager_id));
+    setMemberIds(project.member_ids ?? []);
+    setMemberSearch("");
+    setShowForm(true);
+
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+
+  async function handleDeleteProject(project: Project) {
+    const confirmed = window.confirm(
+      `Are you sure you want to delete "${project.name}"?`
+    );
+
+    if (!confirmed) return;
+
+    setError("");
+    setSuccess("");
+
+    try {
+      await api.delete(`/projects/${project.id}`);
+
+      setProjects((current) =>
+        current.filter((item) => item.id !== project.id)
+      );
+
+      setSuccess(`"${project.name}" deleted successfully.`);
+    } catch (err: any) {
+  console.error("Delete project error:", err);
+  console.error("Delete response:", err.response?.data);
+
+  setError(
+    err.response?.data?.detail ||
+      err.response?.data?.message ||
+      err.message ||
+      "Could not delete the project. Please try again."
+  );
+}
+}
 
   function getUserName(id: number) {
     return users.find((user) => user.id === id)?.name ?? `User #${id}`;
@@ -187,8 +267,12 @@ export default function Projects() {
         <section className="projects-panel">
           <div className="projects-panel-heading">
             <div>
-              <h2>Create a project</h2>
-              <p>Add project details and choose your team.</p>
+              <h2>{editingProjectId !== null ? "Edit project" : "Create a project"}</h2>
+                <p>
+                  {editingProjectId !== null
+                    ? "Update project details and manage your team."
+                    : "Add project details and choose your team."}
+                </p>
             </div>
           </div>
 
@@ -293,7 +377,13 @@ export default function Projects() {
                 className="projects-primary-button"
                 disabled={saving || managers.length === 0}
               >
-                {saving ? "Creating..." : "Create project"}
+                {saving
+                    ? editingProjectId !== null
+                      ? "Saving..."
+                      : "Creating..."
+                    : editingProjectId !== null
+                      ? "Save changes"
+                      : "Create project"}
               </button>
             </div>
           </form>
@@ -330,10 +420,28 @@ export default function Projects() {
           <div className="projects-grid">
             {projects.map((project) => (
               <article className="project-card" key={project.id}>
-            
+                <div className="project-card-header">
+  <h3>{project.name}</h3>
 
-                <h3>{project.name}</h3>
-                <p className="project-description">
+  <div className="project-card-actions">
+    <button
+      type="button"
+      className="projects-secondary-button"
+      onClick={() => handleEditProject(project)}
+    >
+      Edit
+    </button>
+
+    <button
+      type="button"
+      className="projects-delete-button"
+      onClick={() => void handleDeleteProject(project)}
+    >
+      Delete
+    </button>
+  </div>
+</div>
+                    <p className="project-description">
                   {project.description || "No description added."}
                 </p>
 

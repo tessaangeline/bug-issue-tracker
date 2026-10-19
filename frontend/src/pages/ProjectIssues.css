@@ -638,3 +638,38 @@
     padding: 8px 10px;
   }
 }
+
+
+.issue-actions {
+  white-space: nowrap;
+}
+
+.issue-action-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 7px;
+  margin-right: 8px;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  background: #ffffff;
+  color: #475569;
+  cursor: pointer;
+  transition: background 0.2s ease, color 0.2s ease;
+}
+
+.issue-action-btn:hover {
+  background: #f1f5f9;
+}
+
+.issue-action-btn.edit-btn:hover {
+  background: #e0f2fe;
+  color: #0369a1;
+  border-color: #bae6fd;
+}
+
+.issue-action-btn.delete-btn:hover {
+  background: #fee2e2;
+  color: #dc2626;
+  border-color: #fecaca;
+}

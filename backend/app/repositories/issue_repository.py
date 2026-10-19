@@ -42,3 +42,8 @@ def get_issues_assigned_to_user(
         .filter(Issue.assignee_id == user_id)
         .all()
     )
+
+
+def delete_issue(db: Session, issue: Issue) -> None:
+    db.delete(issue)
+    db.commit()

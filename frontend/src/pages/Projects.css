@@ -509,3 +509,46 @@
     padding: 18px;
   }
 }
+.project-card-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.project-card-header h3 {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.project-card-actions {
+  display: flex;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.projects-delete-button {
+  padding: 8px 14px;
+  border: 1px solid #dc2626;
+  border-radius: 8px;
+  background: transparent;
+  color: #dc2626;
+  font: inherit;
+  cursor: pointer;
+}
+
+.projects-delete-button:hover {
+  background: #fef2f2;
+}
+
+.projects-delete-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+@media (max-width: 480px) {
+  .project-card-header {
+    flex-wrap: wrap;
+  }
+}

@@ -192,3 +192,34 @@ def get_my_issues(
         db,
         user_id,
     )
+
+
+def delete_issue(
+    db: Session,
+    issue_id: int,
+    current_user: User,
+) -> None:
+    issue = issue_repository.get_issue(db, issue_id)
+
+    if issue is None:
+        raise HTTPException(status_code=404, detail="Issue not found")
+
+    project = db.query(Project).filter(
+        Project.id == issue.project_id
+    ).first()
+
+    if project is None:
+        raise HTTPException(status_code=404, detail="Project not found")
+
+    is_manager = (
+        current_user.role == UserRole.PROJECT_MANAGER
+        and project.manager_id == current_user.id
+    )
+
+    if not is_manager:
+        raise HTTPException(
+            status_code=403,
+            detail="Only this project's manager can delete issues",
+        )
+
+    issue_repository.delete_issue(db, issue)

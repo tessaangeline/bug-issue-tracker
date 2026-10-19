@@ -1,6 +1,7 @@
 
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
+import { Pencil, Trash2 } from "lucide-react";
 import api from "../api/axios";
 import "./ProjectIssues.css";
 
@@ -56,6 +57,15 @@ export default function ProjectIssues() {
   const [currentPage, setCurrentPage] = useState(1);
 
   const [showCreateForm, setShowCreateForm] = useState(false);
+  const [editingIssue, setEditingIssue] = useState<Issue | null>(null);
+  const [editError, setEditError] = useState("");
+  const [savingEdit, setSavingEdit] = useState(false);
+  const [editTitle, setEditTitle] = useState("");
+  const [editDescription, setEditDescription] = useState("");
+  const [editSeverity, setEditSeverity] = useState("medium");
+  const [editPriority, setEditPriority] = useState("medium");
+  const [editAssigneeId, setEditAssigneeId] = useState("");
+  const [editDuration, setEditDuration] = useState("");
   const [creating, setCreating] = useState(false);
   const [createError, setCreateError] = useState("");
 
@@ -235,6 +245,23 @@ export default function ProjectIssues() {
     } finally {
       setCreating(false);
     }
+  };
+
+  const handleEditClick = (issue: Issue) => {
+    setEditingIssue(issue);
+    setEditTitle(issue.title);
+    setEditDescription(issue.description);
+    setEditSeverity(issue.severity);
+    setEditPriority(issue.priority);
+    setEditAssigneeId(
+      issue.assignee_id === null ? "" : String(issue.assignee_id)
+    );
+    setEditDuration(
+      issue.estimated_duration_days === null
+        ? ""
+        : String(issue.estimated_duration_days)
+    );
+    setEditError("");
   };
 
   const formatLabel = (value: string) =>
@@ -519,6 +546,154 @@ export default function ProjectIssues() {
             </form>
           )}
 
+
+
+            {editingIssue && (
+              <form
+                className="create-issue-form"
+                onSubmit={async (event) => {
+                  event.preventDefault();
+
+                  if (savingEdit) return;
+
+                  const duration = Number(editDuration);
+
+                  if (
+                    editDuration.trim() !== "" &&
+                    (!Number.isInteger(duration) || duration < 1)
+                  ) {
+                    setEditError("Estimated duration must be a whole number of at least 1 day.");
+                    return;
+                  }
+
+                  if (!editTitle.trim() || !editDescription.trim()) {
+                    setEditError("Please enter both a title and description.");
+                    return;
+                  }
+
+                  setSavingEdit(true);
+                  setEditError("");
+
+                  try {
+                    await api.patch(`/issues/${editingIssue.id}`, {
+                      title: editTitle.trim(),
+                      description: editDescription.trim(),
+                      severity: editSeverity,
+                      priority: editPriority,
+                      assignee_id:
+                        editAssigneeId === "" ? null : Number(editAssigneeId),
+                      estimated_duration_days:
+                        editDuration.trim() === "" ? null : duration,
+                    });
+
+                    await fetchIssues();
+                    setEditingIssue(null);
+                  } catch (err: any) {
+                    setEditError(
+                      err.response?.data?.detail ?? "Could not update the issue."
+                    );
+                  } finally {
+                    setSavingEdit(false);
+                  }
+                }}
+              >
+                <h3>Edit issue</h3>
+
+                <label htmlFor="edit-issue-title">Title *</label>
+                <input
+                  id="edit-issue-title"
+                  value={editTitle}
+                  onChange={(event) => setEditTitle(event.target.value)}
+                  required
+                  maxLength={200}
+                />
+
+                <label htmlFor="edit-issue-description">Description *</label>
+                <textarea
+                  id="edit-issue-description"
+                  value={editDescription}
+                  onChange={(event) => setEditDescription(event.target.value)}
+                  required
+                  rows={4}
+                />
+
+                <label htmlFor="edit-issue-duration">Estimated duration (days)</label>
+                <input
+                  id="edit-issue-duration"
+                  type="number"
+                  min="1"
+                  step="1"
+                  value={editDuration}
+                  onChange={(event) => setEditDuration(event.target.value)}
+                  placeholder="Leave blank for no estimate"
+                />
+
+                <label htmlFor="edit-issue-assignee">Assign to</label>
+                <select
+                  id="edit-issue-assignee"
+                  value={editAssigneeId}
+                  onChange={(event) => setEditAssigneeId(event.target.value)}
+                >
+                  <option value="">Unassigned</option>
+                  {members.map((member) => (
+                    <option key={member.id} value={member.id}>
+                      {member.name} ({member.email})
+                    </option>
+                  ))}
+                </select>
+
+                <div className="create-issue-fields">
+                  <div>
+                    <label htmlFor="edit-issue-severity">Severity *</label>
+                    <select
+                      id="edit-issue-severity"
+                      value={editSeverity}
+                      onChange={(event) => setEditSeverity(event.target.value)}
+                    >
+                      <option value="low">Low</option>
+                      <option value="medium">Medium</option>
+                      <option value="high">High</option>
+                      <option value="critical">Critical</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label htmlFor="edit-issue-priority">Priority *</label>
+                    <select
+                      id="edit-issue-priority"
+                      value={editPriority}
+                      onChange={(event) => setEditPriority(event.target.value)}
+                    >
+                      <option value="low">Low</option>
+                      <option value="medium">Medium</option>
+                      <option value="high">High</option>
+                    </select>
+                  </div>
+                </div>
+
+                {editError && (
+                  <p className="issues-error" role="alert">{editError}</p>
+                )}
+
+                <div className="create-issue-actions">
+                  <button type="submit" disabled={savingEdit}>
+                    {savingEdit ? "Saving..." : "Save Changes"}
+                  </button>
+
+                  <button
+                    type="button"
+                    disabled={savingEdit}
+                    onClick={() => {
+                      setEditingIssue(null);
+                      setEditError("");
+                    }}
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </form>
+            )}
+
           {loading && (
             <p className="issues-message">Loading issues...</p>
           )}
@@ -559,6 +734,7 @@ export default function ProjectIssues() {
                       <th>Estimated</th>
                       <th>Due Date</th>
                       <th>Actual Duration</th>
+                      <th>Actions</th>
                     </tr>
                   </thead>
 
@@ -567,7 +743,7 @@ export default function ProjectIssues() {
                       <tr key={issue.id}>
                         <td>
                           <strong>
-                            #{issue.id} {issue.title}
+                            {issue.title}
                           </strong>
                           <p className="issues-description">
                             {issue.description}
@@ -595,7 +771,8 @@ export default function ProjectIssues() {
                         <td>
                           {issue.assignee_id === null
                             ? "Unassigned"
-                            : `User #${issue.assignee_id}`}
+                            : members.find((member) => member.id === issue.assignee_id)?.name ??
+                              "Unknown member"}
                         </td>
 
                         <td>{formatDate(issue.created_at)}</td>
@@ -608,13 +785,52 @@ export default function ProjectIssues() {
 
                         <td>{formatDate(issue.due_date)}</td>
 
-                        <td>
-                          {issue.status === "closed" &&
-                          issue.actual_duration_days != null
-                            ? `${issue.actual_duration_days} day(s)`
-                            : "Pending"}
-                        </td>
-                      </tr>
+                          <td>
+                            {issue.status === "closed" &&
+                            issue.actual_duration_days != null
+                              ? `${issue.actual_duration_days} day(s)`
+                              : "Pending"}
+                          </td>
+
+                          <td className="issue-actions">
+                            <button
+                              type="button"
+                              className="issue-action-btn edit-btn"
+                              title="Edit issue"
+                              aria-label={`Edit ${issue.title}`}
+                              onClick={() => handleEditClick(issue)}
+                            >
+                              <Pencil size={16} />
+                            </button>
+
+                            <button
+                              type="button"
+                              className="issue-action-btn delete-btn"
+                              title="Delete issue"
+                              aria-label={`Delete ${issue.title}`}
+                              onClick={async () => {
+                                const confirmed = window.confirm(
+                                  `Are you sure you want to delete "${issue.title}"?`
+                                );
+
+                                if (!confirmed) return;
+
+                                try {
+                                  await api.delete(`/issues/${issue.id}`);
+                                  await fetchIssues();
+                                } catch (err: any) {
+                                  setError(
+                                    err.response?.data?.detail ?? "Could not delete the issue."
+                                  );
+                                }
+                              }}
+                            >
+                              <Trash2 size={16} />
+                            </button>
+                          </td>
+                          </tr>
+
+
                     ))}
                   </tbody>
                 </table>

@@ -30,6 +30,13 @@ export default function MyProjects() {
   return (
     <main className="dashboard-page">
       <section className="dashboard-content">
+
+        <button
+          className="back-button"
+          onClick={() => navigate("/")}
+        >
+          ← Back to Dashboard
+        </button>
         <h1>My Projects</h1>
         <p>Projects you're a member of.</p>
 

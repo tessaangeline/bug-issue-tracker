@@ -3,9 +3,9 @@ from sqlalchemy.orm import Session
 
 from backend.app.db.database import get_db
 from backend.app.models.user import User, UserRole
-from backend.app.schemas.project import ProjectCreate, ProjectResponse
+from backend.app.schemas.project import ProjectCreate, ProjectResponse, ProjectUpdate
 from backend.app.security import require_role, get_current_user
-from backend.app.services.project_service import create_project, get_projects
+from backend.app.services.project_service import create_project, get_projects, update_project, delete_project
 from backend.app.repositories import project_repository
 
 router = APIRouter(prefix="/projects", tags=["projects"])
@@ -49,6 +49,30 @@ def get_visible_projects(
         status_code=403,
         detail="You do not have permission to view projects",
     )
+
+
+@router.patch("/{project_id}", response_model=ProjectResponse)
+def update_existing_project(
+    project_id: int,
+    project_data: ProjectUpdate,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(
+        require_role([UserRole.SUPER_ADMIN])
+    ),
+):
+    return update_project(db, project_id, project_data)
+
+
+@router.delete("/{project_id}")
+def delete_existing_project(
+    project_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(
+        require_role([UserRole.SUPER_ADMIN])
+    ),
+):
+    delete_project(db, project_id)
+    return {"message": "Project deleted successfully"}
 
 
 @router.get("/{project_id}/members")

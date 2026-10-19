@@ -385,7 +385,7 @@ export default function MyProjectWorkspace() {
                       <tr key={issue.id}>
                         <td>
                           <strong>
-                            #{issue.id} {issue.title}
+                            {issue.title}
                           </strong>
                           <p>{issue.description}</p>
                         </td>

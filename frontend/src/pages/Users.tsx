@@ -1,6 +1,6 @@
 
 import { useEffect, useMemo, useState, type FormEvent } from "react";
-import { useNavigate } from "react-router-dom";
+
 import api from "../api/axios";
 import "./Users.css";
 
@@ -22,7 +22,7 @@ const USERS_PER_PAGE = 10;
 
 export default function Users() {
   const [users, setUsers] = useState<User[]>([]);
-  const navigate = useNavigate();
+
 
   // Create user form
   const [name, setName] = useState("");
@@ -214,18 +214,6 @@ export default function Users() {
     }
   }
 
-  function handleLogout() {
-    api
-      .post("/auth/logout")
-      .catch((error) => {
-        console.error("Logout request failed:", error);
-      })
-      .finally(() => {
-        sessionStorage.removeItem("access_token");
-        sessionStorage.removeItem("refresh_token");
-        navigate("/login", { replace: true });
-      }); 
-  }
   function formatRole(userRole: string) {
     if (userRole === "super_admin") return "Super Admin";
 

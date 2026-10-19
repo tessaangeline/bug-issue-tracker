@@ -3,7 +3,7 @@
 __pycache__/
 *.py[cod]
 
-# Virtual environments
+# Python virtual environments
 .venv/
 venv/
 
@@ -11,6 +11,20 @@ venv/
 .env
 .env.*
 !.env.example
+
+# Node dependencies
+node_modules/
+frontend/node_modules/
+
+# Frontend build output
+frontend/dist/
+
+# Python test and tooling caches
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
 
 # Editors
 .vscode/

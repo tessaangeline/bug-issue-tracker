@@ -16,6 +16,7 @@ from backend.app.services.issue_service import (
     update_issue,
     update_issue_status,
     get_my_issues,
+    delete_issue,
 )
 from backend.app.models.user import User, UserRole
 from backend.app.security import require_role, get_current_user
@@ -91,3 +92,12 @@ def change_issue_status(
         issue_id,
         status_data.status,
     )
+
+
+@issue_router.delete("/{issue_id}", status_code=204)
+def delete_existing_issue(
+    issue_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    delete_issue(db, issue_id, current_user)
