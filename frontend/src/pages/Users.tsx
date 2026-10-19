@@ -290,15 +290,7 @@ export default function Users() {
         </div>
 
         <div className="users-topbar-right">
-          <span className="users-role-badge">Administrator</span>
-
-          <button
-            type="button"
-            className="signout-button"
-            onClick={handleLogout}
-          >
-            Sign out ↗
-          </button>
+          <span className="users-role-badge">Administrator</span>          
         </div>
       </header>
       {toast && (
@@ -429,7 +421,7 @@ export default function Users() {
               <span aria-hidden="true">✎</span>
             </div>
             <div>
-              <h2>Edit user #{editingUser.id}</h2>
+              <h2>Edit user</h2>
               <p>Update this user's account details and role.</p>
             </div>
           </div>
@@ -581,7 +573,6 @@ export default function Users() {
               <table className="users-table">
                 <thead>
                   <tr>
-                    <th>ID</th>
                     <th>Name</th>
                     <th>Email address</th>
                     <th>Role</th>
@@ -595,7 +586,7 @@ export default function Users() {
 
                     return (
                       <tr key={user.id}>
-                        <td className="user-id">#{user.id}</td>
+
 
                         <td>
                           <div className="user-name-cell">
