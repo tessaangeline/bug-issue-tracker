@@ -1,5 +1,5 @@
 
-import { useEffect, useState, type FormEvent } from "react";
+import { useEffect, useMemo, useState, type FormEvent } from "react";
 import api from "../api/axios";
 import "./Users.css";
 
@@ -21,26 +21,37 @@ const USERS_PER_PAGE = 10;
 
 export default function Users() {
   const [users, setUsers] = useState<User[]>([]);
+
+  // Create user form
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [role, setRole] = useState<EditableRole>("project_member");
 
+  // Loading and action states
   const [loading, setLoading] = useState(true);
   const [creating, setCreating] = useState(false);
   const [savingEdit, setSavingEdit] = useState(false);
   const [deletingId, setDeletingId] = useState<number | null>(null);
 
+  // Edit user form
   const [editingUser, setEditingUser] = useState<User | null>(null);
   const [editName, setEditName] = useState("");
   const [editEmail, setEditEmail] = useState("");
   const [editRole, setEditRole] =
     useState<EditableRole>("project_member");
 
+  // Messages and notifications
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
   const [toast, setToast] = useState<Toast | null>(null);
 
+  // Search, filtering and sorting
+  const [search, setSearch] = useState("");
+  const [roleFilter, setRoleFilter] = useState("all");
+  const [sortOrder, setSortOrder] = useState("name-asc");
+
+  // Pagination
   const [currentPage, setCurrentPage] = useState(1);
 
   async function fetchUsers() {
@@ -60,18 +71,6 @@ export default function Users() {
     void fetchUsers();
   }, []);
 
-  const totalPages = Math.max(
-    1,
-    Math.ceil(users.length / USERS_PER_PAGE)
-  );
-
-  const startIndex = (currentPage - 1) * USERS_PER_PAGE;
-
-  const paginatedUsers = users.slice(
-    startIndex,
-    startIndex + USERS_PER_PAGE
-  );
-
   function showToast(type: Toast["type"], text: string) {
     setToast({ type, text });
   }
@@ -86,6 +85,7 @@ export default function Users() {
     return typeof detail === "string" ? detail : fallback;
   }
 
+  // Create a user
   async function handleCreateUser(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setMessage("");
@@ -122,6 +122,7 @@ export default function Users() {
     }
   }
 
+  // Start editing a user
   function startEditing(user: User) {
     if (
       user.role !== "project_member" &&
@@ -139,6 +140,7 @@ export default function Users() {
     setError("");
   }
 
+  // Cancel editing
   function cancelEditing() {
     setEditingUser(null);
     setEditName("");
@@ -146,6 +148,7 @@ export default function Users() {
     setEditRole("project_member");
   }
 
+  // Save edited user
   async function handleUpdateUser(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
@@ -177,6 +180,7 @@ export default function Users() {
     }
   }
 
+  // Delete a user
   async function handleDeleteUser(user: User) {
     const confirmed = window.confirm(
       `Are you sure you want to delete ${user.name} (${user.email})? This action cannot be undone.`
@@ -217,6 +221,52 @@ export default function Users() {
       .join(" ");
   }
 
+  // Search, filter and sort users before pagination
+  const filteredUsers = useMemo(() => {
+    const query = search.trim().toLowerCase();
+
+    return users
+      .filter((user) => {
+        const matchesSearch =
+          !query ||
+          user.name.toLowerCase().includes(query) ||
+          user.email.toLowerCase().includes(query);
+
+        const matchesRole =
+          roleFilter === "all" || user.role === roleFilter;
+
+        return matchesSearch && matchesRole;
+      })
+      .sort((a, b) => {
+        const comparison = a.name.localeCompare(b.name);
+
+        return sortOrder === "name-desc" ? -comparison : comparison;
+      });
+  }, [users, search, roleFilter, sortOrder]);
+
+  // Calculate pagination from the filtered list
+  const totalPages = Math.max(
+    1,
+    Math.ceil(filteredUsers.length / USERS_PER_PAGE)
+  );
+
+  const startIndex = (currentPage - 1) * USERS_PER_PAGE;
+
+  const paginatedUsers = filteredUsers.slice(
+    startIndex,
+    startIndex + USERS_PER_PAGE
+  );
+
+  // Reset to page 1 when search, role filter or sort order changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [search, roleFilter, sortOrder]);
+
+  // Keep the page number valid after deleting users or changing results
+  useEffect(() => {
+    setCurrentPage((page) => Math.min(page, totalPages));
+  }, [totalPages]);
+
   return (
     <main className="users-page">
       {toast && (
@@ -251,6 +301,7 @@ export default function Users() {
         </div>
       </header>
 
+      {/* Create user */}
       <section className="users-card create-card">
         <div className="section-heading">
           <div className="section-icon">+</div>
@@ -303,7 +354,9 @@ export default function Users() {
               minLength={8}
               required
             />
-            <span className="field-hint">Use at least 8 characters.</span>
+            <span className="field-hint">
+              Use at least 8 characters.
+            </span>
           </div>
 
           <div className="form-field">
@@ -311,7 +364,9 @@ export default function Users() {
             <select
               id="user-role"
               value={role}
-              onChange={(e) => setRole(e.target.value as EditableRole)}
+              onChange={(e) =>
+                setRole(e.target.value as EditableRole)
+              }
               className="role-select"
             >
               <option value="project_member">Project Member</option>
@@ -327,12 +382,14 @@ export default function Users() {
           </button>
 
           {message && <p className="form-message success">{message}</p>}
+
           {error && users.length > 0 && (
             <p className="form-message error">{error}</p>
           )}
         </form>
       </section>
 
+      {/* Edit user */}
       {editingUser && (
         <section className="users-card edit-card">
           <div className="section-heading">
@@ -407,16 +464,74 @@ export default function Users() {
         </section>
       )}
 
+      {/* User directory */}
       <section className="users-card directory-card">
         <div className="section-heading directory-heading">
           <div>
             <h2>All users</h2>
-            <p>Accounts registered in your workspace.</p>
+            <p>Search accounts and filter them by role.</p>
           </div>
           <span className="user-count-badge">
             {users.length} accounts
           </span>
         </div>
+
+        {/* Search, role filter and sorting */}
+        <div className="user-directory-filters">
+          <div className="form-field user-search-field">
+            <label htmlFor="user-search">Search users</label>
+            <input
+              id="user-search"
+              type="search"
+              placeholder="Search by name or email..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+            />
+          </div>
+
+          <div className="form-field">
+            <label htmlFor="role-filter">Filter by role</label>
+            <select
+              id="role-filter"
+              value={roleFilter}
+              onChange={(e) => setRoleFilter(e.target.value)}
+            >
+              <option value="all">All roles</option>
+              <option value="super_admin">Super Admin</option>
+              <option value="project_manager">Project Manager</option>
+              <option value="project_member">Project Member</option>
+            </select>
+          </div>
+
+          <div className="form-field">
+            <label htmlFor="user-sort">Sort by name</label>
+            <select
+              id="user-sort"
+              value={sortOrder}
+              onChange={(e) => setSortOrder(e.target.value)}
+            >
+              <option value="name-asc">A–Z</option>
+              <option value="name-desc">Z–A</option>
+            </select>
+          </div>
+
+          <button
+            type="button"
+            className="secondary-button clear-filters-button"
+            onClick={() => {
+              setSearch("");
+              setRoleFilter("all");
+              setSortOrder("name-asc");
+              setCurrentPage(1);
+            }}
+          >
+            Clear filters
+          </button>
+        </div>
+
+        <p className="user-results-count">
+          Showing {filteredUsers.length} of {users.length} users
+        </p>
 
         {loading ? (
           <p className="table-state">Loading users...</p>
@@ -424,6 +539,10 @@ export default function Users() {
           <p className="table-state error">{error}</p>
         ) : users.length === 0 ? (
           <p className="table-state">No users found yet.</p>
+        ) : filteredUsers.length === 0 ? (
+          <p className="table-state">
+            No users match your search or selected filters.
+          </p>
         ) : (
           <>
             <div className="users-table-wrapper">
@@ -509,11 +628,15 @@ export default function Users() {
               </table>
             </div>
 
+            {/* Pagination */}
             <div className="pagination">
               <span className="pagination-info">
                 Showing {startIndex + 1}–
-                {Math.min(startIndex + USERS_PER_PAGE, users.length)} of{" "}
-                {users.length} users
+                {Math.min(
+                  startIndex + USERS_PER_PAGE,
+                  filteredUsers.length
+                )}{" "}
+                of {filteredUsers.length} users
               </span>
 
               <div className="pagination-controls">
