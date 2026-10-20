@@ -673,3 +673,140 @@
   color: #dc2626;
   border-color: #fecaca;
 }
+
+
+/* ========================================
+   PROJECT MEMBER MANAGEMENT
+   ======================================== */
+
+.project-members-list {
+  display: grid;
+  gap: 14px;
+}
+
+.project-member {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+  padding: 12px;
+  border: 1px solid #e4e9ee;
+  border-radius: 10px;
+  background: #ffffff;
+}
+
+.project-member > div {
+  flex: 1;
+  min-width: 0;
+}
+
+.project-member strong {
+  display: block;
+  color: #303750;
+  font-size: 13px;
+  overflow-wrap: anywhere;
+}
+
+.project-member p {
+  margin: 5px 0 0;
+  color: #778092;
+  font-size: 12px;
+  overflow-wrap: anywhere;
+}
+
+/* Add member label */
+.project-info-block label[for="add-project-member"] {
+  display: block;
+  margin-bottom: 8px;
+  color: #303750;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+/* Add member dropdown */
+#add-project-member {
+  flex: 1;
+  min-width: 0;
+  padding: 10px 12px;
+  border: 1px solid #d8dfe6;
+  border-radius: 8px;
+  background: #ffffff;
+  color: #252a45;
+  font: inherit;
+  font-size: 13px;
+  outline: none;
+}
+
+#add-project-member:focus {
+  border-color: #0d8495;
+  box-shadow: 0 0 0 3px rgba(13, 132, 149, 0.12);
+}
+
+#add-project-member:disabled {
+  background: #edf0f3;
+  color: #929baa;
+  cursor: not-allowed;
+}
+
+/* Member management buttons */
+.project-info-block button {
+  flex-shrink: 0;
+  padding: 9px 12px;
+  border: 1px solid #0d5264;
+  border-radius: 8px;
+  background: #0d5264;
+  color: #ffffff;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.project-info-block button:hover:not(:disabled) {
+  background: #094453;
+}
+
+.project-info-block button:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+/* Responsive member controls */
+@media (max-width: 600px) {
+  .project-member {
+    flex-wrap: wrap;
+  }
+
+  .project-member > div {
+    overflow-wrap: anywhere;
+  }
+
+  .project-info-block > div[style*="margin-top"] > div {
+    flex-direction: column;
+  }
+
+  #add-project-member {
+    width: 100%;
+  }
+
+  .project-info-block button {
+    align-self: flex-start;
+  }
+}
+
+
+.issue-status-select {
+  max-width: 150px;
+  padding: 7px 10px;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  background: white;
+  font: inherit;
+  cursor: pointer;
+}
+
+.issue-status-select:focus {
+  outline: 2px solid #0d9488;
+  outline-offset: 2px;
+}

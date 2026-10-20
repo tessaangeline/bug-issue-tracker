@@ -66,8 +66,30 @@ def login_user(db: Session, email: str, password: str):
     }
 
 
-def get_users(db: Session) -> list[User]:
-    return user_repository.get_all_users(db)
+def get_users(
+    db: Session,
+    page: int = 1,
+    page_size: int = 10,
+    search: str = "",
+    role: str | None = None,
+    sort_order: str = "name-asc",
+) -> dict:
+    users, total = user_repository.get_all_users(
+        db,
+        page=page,
+        page_size=page_size,
+        search=search,
+        role=role,
+        sort_order=sort_order,
+    )
+
+    return {
+        "items": users,
+        "total": total,
+        "page": page,
+        "page_size": page_size,
+        "total_pages": (total + page_size - 1) // page_size,
+    }
 
 
 def update_user(db: Session, user_id: int, user_data: UserUpdate) -> User:

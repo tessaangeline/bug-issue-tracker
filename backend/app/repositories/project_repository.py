@@ -28,6 +28,17 @@ def get_projects_for_manager(
     )
 
 
+def get_open_issue_count(db: Session, project_id: int) -> int:
+    return (
+        db.query(Issue)
+        .filter(
+            Issue.project_id == project_id,
+            Issue.status == IssueStatus.OPEN,
+        )
+        .count()
+    )
+
+
 def get_project_by_id(db: Session, project_id: int) -> Project | None:
     return db.query(Project).filter(Project.id == project_id).first()
 

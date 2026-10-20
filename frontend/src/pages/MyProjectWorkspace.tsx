@@ -1,8 +1,9 @@
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import api from "../api/axios";
 import "./MyIssues.css";
+import { toast } from "sonner";
 
 type ProjectUser = {
   id: number;
@@ -20,7 +21,6 @@ type ProjectDetails = {
 
 type Status = "open" | "in_progress" | "in_review" | "closed";
 type Severity = "low" | "medium" | "high" | "critical";
-type Priority = "low" | "medium" | "high";
 
 type Issue = {
   id: number;
@@ -28,7 +28,6 @@ type Issue = {
   description: string;
   status: Status;
   severity: Severity;
-  priority: Priority;
   project_id: number;
   assignee_id: number | null;
   created_at: string | null;
@@ -36,6 +35,14 @@ type Issue = {
   due_date: string | null;
   completed_at: string | null;
   actual_duration_days: number | null;
+};
+
+type PaginatedIssuesResponse = {
+  items: Issue[];
+  total: number;
+  page: number;
+  page_size: number;
+  total_pages: number;
 };
 
 const STATUSES: Status[] = [
@@ -46,8 +53,6 @@ const STATUSES: Status[] = [
 ];
 
 const SEVERITIES: Severity[] = ["low", "medium", "high", "critical"];
-const PRIORITIES: Priority[] = ["low", "medium", "high"];
-
 const ISSUES_PER_PAGE = 10;
 
 const formatLabel = (value: string) =>
@@ -74,125 +79,237 @@ export default function MyProjectWorkspace() {
 
   const [project, setProject] = useState<ProjectDetails | null>(null);
   const [issues, setIssues] = useState<Issue[]>([]);
+  const [availableMembers, setAvailableMembers] = useState<ProjectUser[]>([]);
+  const [selectedMemberId, setSelectedMemberId] = useState("");
+  const [updatingMembers, setUpdatingMembers] = useState(false);
+  const [canManageMembers, setCanManageMembers] = useState(false);
+  const [totalIssues, setTotalIssues] = useState(0);
+
+  const [totalPages, setTotalPages] = useState(0);
+
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
-  const [updateError, setUpdateError] = useState("");
   const [updatingId, setUpdatingId] = useState<number | null>(null);
 
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [severityFilter, setSeverityFilter] = useState("all");
-  const [priorityFilter, setPriorityFilter] = useState("all");
-
-  // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
 
-  useEffect(() => {
-    if (!validId) {
-      setError("Invalid project ID.");
-      setLoading(false);
-      return;
+  // Reset pagination when search or filters change.
+
+useEffect(() => {
+  if (!validId) {
+    toast.error("Invalid project ID.");
+    setLoading(false);
+    return;
+  }
+
+  let cancelled = false;
+
+  const loadProject = async () => {
+    try {
+      const response = await api.get<ProjectDetails>(
+        `/projects/${id}/details`
+      );
+
+      if (cancelled) return;
+
+      setProject(response.data);
+
+      try {
+        const membersResponse = await api.get<ProjectUser[]>(
+          `/projects/${id}/available-members`
+        );
+
+        if (!cancelled) {
+          setAvailableMembers(membersResponse.data);
+          setCanManageMembers(true);
+        }
+      } catch (error) {
+        console.error("Could not load available members:", error);
+
+        if (!cancelled) {
+          setAvailableMembers([]);
+          setCanManageMembers(false);
+        }
+      }
+    } catch (error: any) {
+      if (!cancelled) {
+        toast.error(
+          error.response?.data?.detail ??
+            "Could not load this project. Please try again."
+        );
+      }
     }
+  };
+
+  void loadProject();
+
+  return () => {
+    cancelled = true;
+  };
+}, [id, validId]);
+
+
+
+const updateProjectMembers = async (memberIds: number[]) => {
+  if (!project) return;
+
+  setUpdatingMembers(true);
+
+  try {
+    await api.put(`/projects/${id}/members`, {
+      member_ids: memberIds,
+    });
+
+    const response = await api.get<ProjectDetails>(
+      `/projects/${id}/details`
+    );
+
+    setProject(response.data);
+    setSelectedMemberId("");
+   const membersResponse = await api.get<ProjectUser[]>(
+  `/projects/${id}/available-members`
+);
+setAvailableMembers(membersResponse.data);
+
+    toast.success("Project members updated!");
+  } catch (error: any) {
+    toast.error(
+      error.response?.data?.detail ??
+        "Couldn't update project members."
+    );
+  } finally {
+    setUpdatingMembers(false);
+  }
+};
+
+const handleAddMember = async () => {
+  if (!project || !selectedMemberId) {
+    toast.error("Please select a member first.");
+    return;
+  }
+
+  const memberId = Number(selectedMemberId);
+
+  if (project.members.some((member) => member.id === memberId)) {
+    toast.error("This member is already in the project.");
+    return;
+  }
+
+  await updateProjectMembers([
+    ...project.members.map((member) => member.id),
+    memberId,
+  ]);
+};
+
+const handleRemoveMember = async (memberId: number) => {
+  if (!project) return;
+
+  const confirmed = window.confirm(
+    "Are you sure you want to remove this member from the project?"
+  );
+
+  if (!confirmed) return;
+
+  await updateProjectMembers(
+    project.members
+      .filter((member) => member.id !== memberId)
+      .map((member) => member.id)
+  );
+};
+
+
+  // Search, filters, and pagination are handled by the backend.
+  useEffect(() => {
+    if (!validId) return;
 
     let cancelled = false;
 
-    setLoading(true);
-    setError("");
+    async function loadIssues() {
+      setLoading(true);
 
-    Promise.all([
-      api.get<ProjectDetails>(`/projects/${id}/details`),
-      api.get<Issue[]>("/issues/my-issues"),
-    ])
-      .then(([projectResponse, issuesResponse]) => {
+
+      try {
+        const response = await api.get<PaginatedIssuesResponse>(
+          "/issues/my-issues",
+          {
+            params: {
+              project_id: id,
+              search: search.trim() || undefined,
+              status:
+                statusFilter === "all" ? undefined : statusFilter,
+              severity:
+                severityFilter === "all" ? undefined : severityFilter,
+              page: currentPage,
+              page_size: ISSUES_PER_PAGE,
+            },
+          }
+        );
+
         if (cancelled) return;
 
-        setProject(projectResponse.data);
+        setIssues(response.data.items);
+        setTotalIssues(response.data.total);
+        setTotalPages(response.data.total_pages);
+      } catch (err: any) {
+          if (cancelled) return;
 
-        setIssues(
-          issuesResponse.data.filter((issue) => issue.project_id === id)
-        );
-      })
-      .catch((err) => {
-        if (cancelled) return;
-
-        setError(
-          err.response?.data?.detail ??
-            "Could not load this project. Please try again."
-        );
-      })
-      .finally(() => {
+          toast.error(
+            err.response?.data?.detail ??
+              "Could not load issues. Please try again."
+          );
+        } finally {
         if (!cancelled) setLoading(false);
-      });
+      }
+    }
+
+    loadIssues();
 
     return () => {
       cancelled = true;
     };
-  }, [id, validId]);
-
-  // Apply search and filters before pagination
-  const filteredIssues = useMemo(() => {
-    const query = search.trim().toLowerCase();
-
-    return issues.filter((issue) => {
-      const matchesSearch =
-        !query ||
-        issue.title.toLowerCase().includes(query) ||
-        (issue.description ?? "").toLowerCase().includes(query);
-
-      return (
-        matchesSearch &&
-        (statusFilter === "all" || issue.status === statusFilter) &&
-        (severityFilter === "all" || issue.severity === severityFilter) &&
-        (priorityFilter === "all" || issue.priority === priorityFilter)
-      );
-    });
-  }, [issues, search, statusFilter, severityFilter, priorityFilter]);
-
-  // Calculate the number of pages
-  const totalPages = Math.max(
-    1,
-    Math.ceil(filteredIssues.length / ISSUES_PER_PAGE)
-  );
-
-  // Get only the issues for the current page
-  const paginatedIssues = useMemo(() => {
-    const startIndex = (currentPage - 1) * ISSUES_PER_PAGE;
-
-    return filteredIssues.slice(
-      startIndex,
-      startIndex + ISSUES_PER_PAGE
-    );
-  }, [filteredIssues, currentPage]);
-
-  // Reset to page 1 when the project or filters change
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [search, statusFilter, severityFilter, priorityFilter, id]);
-
-  // Keep the current page valid if the result count decreases
-  useEffect(() => {
-    setCurrentPage((page) => Math.min(page, totalPages));
-  }, [totalPages]);
+  }, [
+    id,
+    validId,
+    search,
+    statusFilter,
+    severityFilter,
+    currentPage,
+  ]);
 
   async function handleStatusChange(issue: Issue, status: Status) {
     if (issue.status === status) return;
 
     setUpdatingId(issue.id);
-    setUpdateError("");
-
     try {
-      const response = await api.patch<Issue>(
-        `/issues/${issue.id}/status`,
-        { status }
+      await api.patch<Issue>(`/issues/${issue.id}/status`, { status });
+
+      // Reload from the backend so results and counts stay accurate.
+      const response = await api.get<PaginatedIssuesResponse>(
+        "/issues/my-issues",
+        {
+          params: {
+            project_id: id,
+            search: search.trim() || undefined,
+            status:
+              statusFilter === "all" ? undefined : statusFilter,
+            severity:
+              severityFilter === "all" ? undefined : severityFilter,
+            page: currentPage,
+            page_size: ISSUES_PER_PAGE,
+          },
+        }
       );
 
-      setIssues((current) =>
-        current.map((item) =>
-          item.id === issue.id ? response.data : item
-        )
-      );
+      setIssues(response.data.items);
+      setTotalIssues(response.data.total);
+      setTotalPages(response.data.total_pages);
+
+      // If the updated issue no longer matches the filter,
+      // the backend removes it from the current results.
     } catch (err: any) {
-      setUpdateError(
+      toast.error(
         err.response?.data?.detail ?? "Could not update issue status."
       );
     } finally {
@@ -200,7 +317,7 @@ export default function MyProjectWorkspace() {
     }
   }
 
-  if (loading) {
+  if (loading && !project) {
     return (
       <main className="dashboard-page">
         <section className="dashboard-content">
@@ -210,28 +327,14 @@ export default function MyProjectWorkspace() {
     );
   }
 
-  if (error || !project) {
-    return (
-      <main className="dashboard-page">
-        <section className="dashboard-content">
-          <p role="alert">{error || "Project not found."}</p>
-
-          <button onClick={() => navigate("/my-projects")}>
-            Back to My Projects
-          </button>
-        </section>
-      </main>
-    );
-  }
+  if (!project) return null;
 
   const startItem =
-    filteredIssues.length === 0
-      ? 0
-      : (currentPage - 1) * ISSUES_PER_PAGE + 1;
+    totalIssues === 0 ? 0 : (currentPage - 1) * ISSUES_PER_PAGE + 1;
 
   const endItem = Math.min(
     currentPage * ISSUES_PER_PAGE,
-    filteredIssues.length
+    totalIssues
   );
 
   return (
@@ -253,7 +356,7 @@ export default function MyProjectWorkspace() {
             </p>
           </div>
 
-          <div className="welcome-avatar">#{project.id}</div>
+          <div className="welcome-avatar">▦</div>
         </div>
 
         <section className="dashboard-section">
@@ -273,21 +376,82 @@ export default function MyProjectWorkspace() {
               )}
             </div>
 
-            <div className="project-info-block">
-              <strong>Team Members ({project.members.length})</strong>
+            
+<div className="project-info-block">
+  <strong>Team Members ({project.members.length})</strong>
+   <p>
+  Debug: canManageMembers = {String(canManageMembers)}
+</p>           
+  {project.members.length === 0 ? (
+    <p>No members listed.</p>
+  ) : (
+    <ul>
+      {project.members.map((member) => (
+        <li key={member.id}>
+          {member.name} — {member.email}
 
-              {project.members.length === 0 ? (
-                <p>No members listed.</p>
-              ) : (
-                <ul>
-                  {project.members.map((member) => (
-                    <li key={member.id}>
-                      {member.name} — {member.email}
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </div>
+          {canManageMembers && (
+            <button
+              type="button"
+              disabled={updatingMembers}
+              onClick={() => handleRemoveMember(member.id)}
+              style={{ marginLeft: "12px" }}
+            >
+              Remove
+            </button>
+          )}
+        </li>
+      ))}
+    </ul>
+  )}
+
+  {canManageMembers && (
+    <div style={{ marginTop: "16px" }}>
+      <label htmlFor="add-project-member">
+        Add a team member
+      </label>
+
+      <div
+        style={{
+          display: "flex",
+          gap: "8px",
+          marginTop: "8px",
+          flexWrap: "wrap",
+        }}
+      >
+        <select
+          id="add-project-member"
+          value={selectedMemberId}
+          onChange={(event) =>
+            setSelectedMemberId(event.target.value)
+          }
+          disabled={updatingMembers}
+        >
+          <option value="">Select a member</option>
+
+          {availableMembers.map((member) => (
+            <option key={member.id} value={member.id}>
+              {member.name} — {member.email}
+            </option>
+          ))}
+        </select>
+
+        <button
+          type="button"
+          onClick={handleAddMember}
+          disabled={updatingMembers || !selectedMemberId}
+        >
+          {updatingMembers ? "Saving..." : "Add Member"}
+        </button>
+      </div>
+
+      {availableMembers.length === 0 && (
+        <p>No additional members are available to add.</p>
+      )}
+    </div>
+  )}
+</div>
+
           </div>
         </section>
 
@@ -298,11 +462,8 @@ export default function MyProjectWorkspace() {
             Issues assigned to you in {project.name}.
           </p>
 
-          {updateError && (
-            <p role="alert" className="issue-update-error">
-              {updateError}
-            </p>
-          )}
+
+
 
           <div className="issue-filters">
             <input
@@ -319,7 +480,6 @@ export default function MyProjectWorkspace() {
               aria-label="Filter by status"
             >
               <option value="all">All statuses</option>
-
               {STATUSES.map((status) => (
                 <option key={status} value={status}>
                   {formatLabel(status)}
@@ -333,35 +493,22 @@ export default function MyProjectWorkspace() {
               aria-label="Filter by severity"
             >
               <option value="all">All severities</option>
-
               {SEVERITIES.map((severity) => (
                 <option key={severity} value={severity}>
                   {formatLabel(severity)}
                 </option>
               ))}
             </select>
-
-            <select
-              value={priorityFilter}
-              onChange={(event) => setPriorityFilter(event.target.value)}
-              aria-label="Filter by priority"
-            >
-              <option value="all">All priorities</option>
-
-              {PRIORITIES.map((priority) => (
-                <option key={priority} value={priority}>
-                  {formatLabel(priority)}
-                </option>
-              ))}
-            </select>
           </div>
 
           <p>
-            {filteredIssues.length} issues shown · {issues.length} assigned to
-            you in this project
+            {totalIssues} matching issue(s)
+            {loading ? " · Updating..." : ""}
           </p>
 
-          {filteredIssues.length === 0 ? (
+          {loading ? (
+            <p>Loading issues...</p>
+          ) : totalIssues === 0 ? (
             <p>No assigned issues match your filters in this project.</p>
           ) : (
             <>
@@ -372,7 +519,6 @@ export default function MyProjectWorkspace() {
                       <th>Issue</th>
                       <th>Status</th>
                       <th>Severity</th>
-                      <th>Priority</th>
                       <th>Created</th>
                       <th>Estimated</th>
                       <th>Due Date</th>
@@ -381,12 +527,10 @@ export default function MyProjectWorkspace() {
                   </thead>
 
                   <tbody>
-                    {paginatedIssues.map((issue) => (
+                    {issues.map((issue) => (
                       <tr key={issue.id}>
                         <td>
-                          <strong>
-                            {issue.title}
-                          </strong>
+                          <strong>{issue.title}</strong>
                           <p>{issue.description}</p>
                         </td>
 
@@ -394,7 +538,7 @@ export default function MyProjectWorkspace() {
                           <select
                             value={issue.status}
                             disabled={updatingId === issue.id}
-                            aria-label={`Update status for issue ${issue.id}`}
+                            aria-label={`Update status for ${issue.title}`}
                             onChange={(event) =>
                               handleStatusChange(
                                 issue,
@@ -415,7 +559,6 @@ export default function MyProjectWorkspace() {
                         </td>
 
                         <td>{formatLabel(issue.severity)}</td>
-                        <td>{formatLabel(issue.priority)}</td>
                         <td>{formatDate(issue.created_at)}</td>
 
                         <td>
@@ -438,36 +581,34 @@ export default function MyProjectWorkspace() {
                 </table>
               </div>
 
-              {/* Pagination controls */}
               <div className="issues-pagination">
                 <span>
-                  Showing {startItem}–{endItem} of {filteredIssues.length}{" "}
-                  issues
+                  Showing {startItem}–{endItem} of {totalIssues} issues
                 </span>
 
                 <div className="issues-pagination-controls">
                   <button
                     type="button"
+                    disabled={currentPage <= 1 || loading}
                     onClick={() =>
                       setCurrentPage((page) => Math.max(1, page - 1))
                     }
-                    disabled={currentPage === 1}
                   >
                     Previous
                   </button>
 
                   <span>
-                    Page {currentPage} of {totalPages}
+                    Page {currentPage} of {Math.max(1, totalPages)}
                   </span>
 
                   <button
                     type="button"
+                    disabled={currentPage >= totalPages || loading}
                     onClick={() =>
                       setCurrentPage((page) =>
                         Math.min(totalPages, page + 1)
                       )
                     }
-                    disabled={currentPage === totalPages}
                   >
                     Next
                   </button>

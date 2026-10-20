@@ -1,11 +1,10 @@
 
 from datetime import datetime, timedelta, timezone
 
-from pydantic import BaseModel, Field, computed_field
+from pydantic import BaseModel, Field, computed_field, field_validator
 
 from backend.app.models.issue import (
     IssueSeverity,
-    IssuePriority,
     IssueStatus,
 )
 
@@ -14,9 +13,24 @@ class IssueCreate(BaseModel):
     title: str
     description: str
     severity: IssueSeverity
-    priority: IssuePriority
     assignee_id: int | None = None
-    estimated_duration_days: int | None = Field(default=None, ge=1)
+    estimated_duration_days: float | None = Field(
+        default=None,
+        ge=1,
+        le=36500,
+    )
+
+    @field_validator("estimated_duration_days")
+    @classmethod
+    def validate_estimated_duration(cls, value: float | None) -> float | None:
+        if value is None:
+            return value
+
+        if round(value, 2) != value:
+            raise ValueError(
+                "Estimated duration can have at most 2 decimal places.")
+
+        return value
 
 
 class IssueResponse(BaseModel):
@@ -25,12 +39,11 @@ class IssueResponse(BaseModel):
     description: str
     status: IssueStatus
     severity: IssueSeverity
-    priority: IssuePriority
     project_id: int
     assignee_id: int | None
 
     created_at: datetime
-    estimated_duration_days: int | None = None
+    estimated_duration_days: float | None = None
     completed_at: datetime | None = None
 
     model_config = {"from_attributes": True}
@@ -68,9 +81,24 @@ class IssueUpdate(BaseModel):
     title: str | None = None
     description: str | None = None
     severity: IssueSeverity | None = None
-    priority: IssuePriority | None = None
     assignee_id: int | None = None
-    estimated_duration_days: int | None = Field(default=None, ge=1)
+    estimated_duration_days: float | None = Field(
+        default=None,
+        ge=1,
+        le=36500,
+    )
+
+    @field_validator("estimated_duration_days")
+    @classmethod
+    def validate_estimated_duration(cls, value: float | None) -> float | None:
+        if value is None:
+            return value
+
+        if round(value, 2) != value:
+            raise ValueError(
+                "Estimated duration can have at most 2 decimal places.")
+
+        return value
 
 
 class IssueStatusUpdate(BaseModel):

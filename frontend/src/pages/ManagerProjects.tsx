@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import api from "../api/axios";
 import "./ManagerProjects.css";
+import { toast } from "sonner";
 
 type Project = {
   id: number;
@@ -15,7 +16,6 @@ type Project = {
 export default function ManagerProjects() {
   const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -23,7 +23,7 @@ export default function ManagerProjects() {
       .get<Project[]>("/projects/")
       .then((response) => setProjects(response.data))
       .catch((err) => {
-        setError(
+        toast.error(
           err.response?.data?.detail ?? "Could not load your projects."
         );
       })
@@ -68,11 +68,8 @@ export default function ManagerProjects() {
 
           {loading && <p className="manager-projects-message">Loading projects...</p>}
 
-          {error && (
-            <p className="manager-projects-error" role="alert">{error}</p>
-          )}
 
-          {!loading && !error && projects.length === 0 && (
+          {!loading && projects.length === 0 && (
             <div className="manager-projects-empty">
               <h3>No projects assigned yet</h3>
               <p>
@@ -82,7 +79,7 @@ export default function ManagerProjects() {
             </div>
           )}
 
-          {!loading && !error && projects.length > 0 && (
+          {!loading && projects.length > 0 && (
             <div className="manager-project-grid">
               {projects.map((project) => (
                 <article className="manager-project-card" key={project.id}>

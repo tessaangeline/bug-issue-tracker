@@ -4,17 +4,16 @@ import axios from "axios";
 import api from "../api/axios";
 import "./Login.css";
 import { useNavigate } from "react-router-dom";
+import { toast } from "sonner";
 
 export default function Login() {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    setError("");
     setLoading(true);
 
     try {
@@ -38,12 +37,12 @@ navigate("/");
 
     } catch (err) {
       if (axios.isAxiosError(err)) {
-        setError(
+        toast.error(
           err.response?.data?.detail ??  //If the backend provides an error message, show it. Otherwise, show our default error.
             "Unable to log in. Please check your credentials."
         ); 
       } else {
-        setError("Something went wrong. Please try again.");
+        toast.error("Something went wrong. Please try again.");
       }
     } finally {
       setLoading(false);
@@ -86,7 +85,6 @@ navigate("/");
             onChange={(event) => setPassword(event.target.value)}
             required
           />
-          {error && <p className="login-error">{error}</p>}
           <button type="submit" disabled={loading}>
             {loading ? "Signing in..." : "Sign in"}
           </button>

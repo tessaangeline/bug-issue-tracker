@@ -1,3 +1,4 @@
+
 from pydantic import BaseModel, ConfigDict, Field
 
 
@@ -21,3 +22,10 @@ class ProjectResponse(BaseModel):
     description: str | None
     manager_id: int
     member_ids: list[int] = Field(default_factory=list)
+    open_issue_count: int = 0
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class ProjectMembersUpdate(BaseModel):
+    member_ids: list[int] = Field(min_length=1)

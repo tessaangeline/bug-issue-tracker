@@ -1,5 +1,6 @@
 
 import { useEffect, useState } from "react";
+import { Toaster } from "sonner";
 
 import Projects from "./pages/Projects";
 import Users from "./pages/Users";
@@ -82,13 +83,27 @@ return (
         <span>BugTracker</span>
       </div>
 
-      <span className="admin-badge">
-  {user.role === "super_admin"
-    ? "Administrator"
-    : user.role === "project_manager"
-      ? "Project Manager"
-      : "Project Member"}
-</span>
+      
+<div className="dashboard-topbar-actions">
+  <span className="admin-badge">
+    {user.role === "super_admin"
+      ? "Administrator"
+      : user.role === "project_manager"
+        ? "Project Manager"
+        : "Project Member"}
+  </span>
+
+  <button
+    type="button"
+    className="dashboard-logout-button"
+    onClick={handleLogout}
+  >
+    Sign out ↗
+  </button>
+</div>
+
+
+
     </header>
 
     <section className="dashboard-content">
@@ -185,15 +200,6 @@ return (
     </button>
   </>
 )}
-
-          <button className="action-card logout-card" onClick={handleLogout}>
-            <span className="action-icon">↗</span>
-            <span className="action-title">Sign out</span>
-            <span className="action-description">
-              Securely end your current session.
-            </span>
-            <span className="action-link">Log out →</span>
-          </button>
 
         </div>
       </section>
@@ -393,20 +399,33 @@ function ProtectedMyProjectWorkspace() {
 
 function App() {
   return (
-    <BrowserRouter>
-      <Routes>
-        <Route path="/login" element={<Login />} />
-        <Route path="/" element={<Dashboard />} />
-        <Route path="*" element={<Navigate to="/login" replace />} />
-        <Route path="/users" element={ <ProtectedUsers /> } />
-        <Route path="/projects" element={<ProtectedProjects />} />
-        <Route path="/manager/projects" element={<ProtectedManagerProjects />} />
-        <Route path="/manager/projects/:projectId" element={<ProtectedProjectIssues />} />
-        <Route path="/my-issues" element={<ProtectedMyIssues />} />
-        <Route path="/my-projects" element={<ProtectedMyProjects />} />
-        <Route path="/my-projects/:projectId" element={<ProtectedMyProjectWorkspace />} />
-      </Routes>
-    </BrowserRouter>
+    <>
+      <Toaster position="top-right" richColors />
+
+      <BrowserRouter>
+        <Routes>
+          <Route path="/login" element={<Login />} />
+          <Route path="/" element={<Dashboard />} />
+          <Route path="*" element={<Navigate to="/login" replace />} />
+          <Route path="/users" element={<ProtectedUsers />} />
+          <Route path="/projects" element={<ProtectedProjects />} />
+          <Route
+            path="/manager/projects"
+            element={<ProtectedManagerProjects />}
+          />
+          <Route
+            path="/manager/projects/:projectId"
+            element={<ProtectedProjectIssues />}
+          />
+          <Route path="/my-issues" element={<ProtectedMyIssues />} />
+          <Route path="/my-projects" element={<ProtectedMyProjects />} />
+          <Route
+            path="/my-projects/:projectId"
+            element={<ProtectedMyProjectWorkspace />}
+          />
+        </Routes>
+      </BrowserRouter>
+    </>
   );
 }
 

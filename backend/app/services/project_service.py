@@ -1,12 +1,12 @@
+
 from sqlalchemy import func
 from sqlalchemy.orm import Session
-from fastapi import HTTPException
+from fastapi import HTTPException, status
 
 from backend.app.models.project import Project
+from backend.app.models.issue import Issue, IssueStatus
 from backend.app.schemas.project import ProjectCreate, ProjectUpdate
 from backend.app.repositories import project_repository
-from backend.app.models.user import User, UserRole
-from backend.app.models.issue import Issue, IssueStatus
 
 
 def create_project(
@@ -39,6 +39,7 @@ def create_project(
         manager_id=project_data.manager_id,
         member_ids=project_data.member_ids,
     )
+
     return project_repository.create_project(db, new_project)
 
 
@@ -96,40 +97,35 @@ def update_project(
     return project_repository.update_project(db, project)
 
 
-def get_projects(db: Session) -> list[Project]:
-    return project_repository.get_projects(db)
+def get_projects(db: Session) -> list[dict]:
+    projects = project_repository.get_projects(db)
 
+    results = []
 
-def update_project(
-    db: Session,
-    project_id: int,
-    project_data: ProjectUpdate,
-) -> Project:
-    project = project_repository.get_project_by_id(db, project_id)
-
-    if project is None:
-        raise HTTPException(status_code=404, detail="Project not found")
-
-    update_data = project_data.model_dump(exclude_unset=True)
-
-    # These fields are required by the Project model.
-    for field in ("name", "manager_id", "member_ids"):
-        if field in update_data and update_data[field] is None:
-            raise HTTPException(
-                status_code=422,
-                detail=f"{field} cannot be null",
+    for project in projects:
+        open_issue_count = (
+            db.query(Issue)
+            .filter(
+                Issue.project_id == project.id,
+                Issue.status == IssueStatus.OPEN,
             )
+            .count()
+        )
 
-    for field, value in update_data.items():
-        setattr(project, field, value)
+        results.append({
+            "id": project.id,
+            "name": project.name,
+            "description": project.description,
+            "manager_id": project.manager_id,
+            "member_ids": project.member_ids or [],
+            "open_issue_count": open_issue_count,
+        })
 
-    return project_repository.update_project(db, project)
+    return results
 
 
 def delete_project(db: Session, project_id: int) -> None:
-    project = project_repository.get_project_by_id(
-        db, project_id
-    )
+    project = project_repository.get_project_by_id(db, project_id)
 
     if project is None:
         raise HTTPException(
@@ -151,11 +147,9 @@ def delete_project(db: Session, project_id: int) -> None:
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
             detail=(
-                "Cannot delete this project because it has "
-                "open or in-progress issues. Close them first."
+                "Cannot delete this project because it has active issues. "
+                "Close all issues before deleting the project."
             ),
         )
 
-    project_repository.permanently_delete_project(
-        db, project
-    )
+    project_repository.permanently_delete_project(db, project)

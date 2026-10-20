@@ -1,5 +1,7 @@
+from datetime import datetime, timezone
 from sqlalchemy.orm import Session
 from fastapi import HTTPException
+from datetime import datetime, timezone
 
 from backend.app.models.issue import Issue, IssueStatus
 from backend.app.schemas.issue import IssueCreate, IssueUpdate
@@ -53,7 +55,6 @@ def create_issue(
         title=issue_data.title,
         description=issue_data.description,
         severity=issue_data.severity,
-        priority=issue_data.priority,
         status=IssueStatus.OPEN,
         project_id=project_id,
         assignee_id=assignee_id,
@@ -64,13 +65,31 @@ def create_issue(
 
 
 def get_project_issues(
-        db: Session,
-        project_id: int,
-) -> list[Issue]:
-    return issue_repository.get_project_issues(
-        db,
-        project_id
+    db: Session,
+    project_id: int,
+    search: str | None = None,
+    status: str | None = None,
+    severity: str | None = None,
+    page: int = 1,
+    page_size: int = 10,
+) -> dict:
+    issues, total = issue_repository.get_project_issues(
+        db=db,
+        project_id=project_id,
+        search=search,
+        status=status,
+        severity=severity,
+        page=page,
+        page_size=page_size,
     )
+
+    return {
+        "items": issues,
+        "total": total,
+        "page": page,
+        "page_size": page_size,
+        "total_pages": (total + page_size - 1) // page_size,
+    }
 
 
 def get_issue(
@@ -154,32 +173,59 @@ def update_issue_status(
     db: Session,
     issue_id: int,
     new_status: IssueStatus,
+    current_user: User,
 ) -> Issue:
     issue = issue_repository.get_issue(db, issue_id)
 
     if issue is None:
         raise HTTPException(status_code=404, detail="Issue not found")
 
-    allowed_transition = {
-        IssueStatus.OPEN: [IssueStatus.IN_PROGRESS],
-        IssueStatus.IN_PROGRESS: [IssueStatus.IN_REVIEW],
-        IssueStatus.IN_REVIEW: [IssueStatus.CLOSED],
-        IssueStatus.CLOSED: [IssueStatus.OPEN],
-    }
+    project = db.query(Project).filter(
+        Project.id == issue.project_id
+    ).first()
 
-    if new_status not in allowed_transition[issue.status]:
+    if project is None:
+        raise HTTPException(status_code=404, detail="Project not found")
+
+    is_manager = (
+        current_user.role == UserRole.PROJECT_MANAGER
+        and project.manager_id == current_user.id
+    )
+
+    is_assigned_member = (
+        current_user.role == UserRole.PROJECT_MEMBER
+        and issue.assignee_id == current_user.id
+    )
+
+    if not (is_manager or is_assigned_member):
         raise HTTPException(
-            status_code=400,
-            detail="Invalid status transition",
+            status_code=403,
+            detail="You do not have permission to update this issue status",
         )
 
-    issue.status = new_status
+# Allow any valid status change; there are no transition restrictions.
 
     if new_status == IssueStatus.CLOSED:
-        from datetime import datetime, timezone
-        issue.completed_at = datetime.now(timezone.utc)
-    elif new_status == IssueStatus.OPEN:
+        completed_at = datetime.now(timezone.utc)
+        issue.status = new_status
+        issue.completed_at = completed_at
+
+        if issue.created_at is not None:
+            created_at = issue.created_at
+
+            # Handle timestamps that don't have timezone information.
+            if created_at.tzinfo is None:
+                created_at = created_at.replace(tzinfo=timezone.utc)
+
+            actual_days = (
+                completed_at - created_at
+            ).total_seconds() / 86400
+
+            issue.actual_duration_days = round(max(0, actual_days), 2)
+    else:
+        issue.status = new_status
         issue.completed_at = None
+        issue.actual_duration_days = None
 
     return issue_repository.update_issue(db, issue)
 
@@ -187,11 +233,31 @@ def update_issue_status(
 def get_my_issues(
     db: Session,
     user_id: int,
-) -> list[Issue]:
-    return issue_repository.get_issues_assigned_to_user(
-        db,
-        user_id,
+    search: str | None = None,
+    status: str | None = None,
+    severity: str | None = None,
+    project_id: int | None = None,
+    page: int = 1,
+    page_size: int = 10,
+) -> dict:
+    issues, total = issue_repository.get_issues_assigned_to_user(
+        db=db,
+        user_id=user_id,
+        search=search,
+        status=status,
+        severity=severity,
+        project_id=project_id,
+        page=page,
+        page_size=page_size,
     )
+
+    return {
+        "items": issues,
+        "total": total,
+        "page": page,
+        "page_size": page_size,
+        "total_pages": (total + page_size - 1) // page_size,
+    }
 
 
 def delete_issue(

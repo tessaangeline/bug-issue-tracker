@@ -1,4 +1,4 @@
-from sqlalchemy import Enum as SQLEnum, ForeignKey, DateTime, Integer
+from sqlalchemy import Enum as SQLEnum, ForeignKey, DateTime, Float
 from enum import Enum
 from sqlalchemy.orm import Mapped, mapped_column
 from sqlalchemy.sql import func
@@ -21,12 +21,6 @@ class IssueSeverity(str, Enum):
     CRITICAL = "critical"
 
 
-class IssuePriority(str, Enum):
-    LOW = "low"
-    MEDIUM = "medium"
-    HIGH = "high"
-
-
 class Issue(Base):
     __tablename__ = "issues"
 
@@ -41,10 +35,7 @@ class Issue(Base):
         SQLEnum(IssueSeverity, name="issue_severity", values_callable=lambda enum: [
             member.value for member in enum])
     )
-    priority: Mapped[IssuePriority] = mapped_column(
-        SQLEnum(IssuePriority, name="issue_priority", values_callable=lambda enum: [
-            member.value for member in enum])
-    )
+
     project_id: Mapped[int] = mapped_column(
         ForeignKey("projects.id")
     )
@@ -62,7 +53,7 @@ class Issue(Base):
 
     # Number of calendar days estimated by the manager
     estimated_duration_days: Mapped[int | None] = mapped_column(
-        Integer,
+        Float,
         nullable=True,
     )
 

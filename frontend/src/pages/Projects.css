@@ -552,3 +552,49 @@
     flex-wrap: wrap;
   }
 }
+
+
+.project-info-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin: 20px 0;
+}
+
+.project-manager-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+
+.project-open-issues {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  gap: 6px;
+  padding: 14px 18px;
+  border-radius: 12px;
+  background: #f3f4f6;
+  text-align: center;
+}
+
+.project-open-issues strong {
+  font-size: 24px;
+  font-weight: 700;
+}
+
+.project-open-issues span {
+  font-size: 14px;
+  color: #4b5563;
+}
+
+@media (max-width: 480px) {
+  .project-info-row {
+    align-items: flex-start;
+    flex-wrap: wrap;
+  }
+}

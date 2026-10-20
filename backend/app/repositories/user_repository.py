@@ -1,4 +1,5 @@
 from sqlalchemy.orm import Session
+from sqlalchemy import func
 
 from backend.app.models.user import User
 
@@ -20,8 +21,41 @@ def get_by_id(db: Session, user_id: int) -> User | None:
     return db.query(User).filter(User.id == user_id).first()
 
 
-def get_all_users(db: Session) -> list[User]:
-    return db.query(User).order_by(User.id).all()
+def get_all_users(
+    db: Session,
+    page: int = 1,
+    page_size: int = 10,
+    search: str = "",
+    role: str | None = None,
+    sort_order: str = "name-asc",
+) -> tuple[list[User], int]:
+    query = db.query(User)
+
+    if search.strip():
+        search_term = f"%{search.strip()}%"
+        query = query.filter(
+            (User.name.ilike(search_term))
+            | (User.email.ilike(search_term))
+        )
+
+    if role and role != "all":
+        query = query.filter(User.role == role)
+
+    if sort_order == "name-desc":
+        query = query.order_by(func.lower(User.name).desc(), User.id.desc())
+    else:
+        query = query.order_by(func.lower(User.name).asc(), User.id.asc())
+
+    total = query.count()
+
+    users = (
+        query
+        .offset((page - 1) * page_size)
+        .limit(page_size)
+        .all()
+    )
+
+    return users, total
 
 
 def update_user(db: Session) -> User:

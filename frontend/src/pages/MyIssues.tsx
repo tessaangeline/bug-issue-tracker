@@ -2,11 +2,10 @@
 import { useEffect, useMemo, useState } from "react";
 import api from "../api/axios";
 import "./MyIssues.css";
-
+import {toast} from "sonner";
 
 type Status = "open" | "in_progress" | "in_review" | "closed";
 type Severity = "low" | "medium" | "high" | "critical";
-type Priority = "low" | "medium" | "high";
 
 type Issue = {
   id: number;
@@ -14,7 +13,6 @@ type Issue = {
   description: string;
   status: Status;
   severity: Severity;
-  priority: Priority;
   project_id: number;
   assignee_id: number | null;
   created_at: string | null;
@@ -22,6 +20,14 @@ type Issue = {
   due_date: string | null;
   completed_at: string | null;
   actual_duration_days: number | null;
+};
+
+type PaginatedIssuesResponse = {
+  items: Issue[];
+  total: number;
+  page: number;
+  page_size: number;
+  total_pages: number;
 };
 
 const ISSUES_PER_PAGE = 10;
@@ -39,8 +45,6 @@ const SEVERITIES: Severity[] = [
   "high",
   "critical",
 ];
-
-const PRIORITIES: Priority[] = ["low", "medium", "high"];
 
 const formatLabel = (value: string) =>
   value.replaceAll("_", " ").replace(/\b\w/g, (char) =>
@@ -60,30 +64,78 @@ const formatDate = (value: string | null | undefined) => {
 export default function MyIssues() {
   const [issues, setIssues] = useState<Issue[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
   const [updatingId, setUpdatingId] = useState<number | null>(null);
-  const [updateError, setUpdateError] = useState("");
+
 
   const [search, setSearch] = useState("");
   const [projectFilter, setProjectFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState("all");
   const [severityFilter, setSeverityFilter] = useState("all");
-  const [priorityFilter, setPriorityFilter] = useState("all");
 
   const [currentPage, setCurrentPage] = useState(1);
+  const [totalIssues, setTotalIssues] = useState(0);
+  const [totalPages, setTotalPages] = useState(0);
 
   useEffect(() => {
-    api
-      .get<Issue[]>("/issues/my-issues")
-      .then((response) => setIssues(response.data))
-      .catch((err) => {
-        setError(
-          err.response?.data?.detail ?? "Could not load your issues."
-        );
-      })
-      .finally(() => setLoading(false));
-  }, []);
+    setCurrentPage(1);
+  }, [search, projectFilter, statusFilter, severityFilter]);
 
+  useEffect(() => {
+    let cancelled = false;
+
+    async function loadIssues() {
+      setLoading(true);
+
+      try {
+        const response = await api.get<PaginatedIssuesResponse>(
+          "/issues/my-issues",
+          {
+            params: {
+              search: search.trim() || undefined,
+              project_id:
+                projectFilter === "all"
+                  ? undefined
+                  : Number(projectFilter),
+              status:
+                statusFilter === "all" ? undefined : statusFilter,
+              severity:
+                severityFilter === "all" ? undefined : severityFilter,
+              page: currentPage,
+              page_size: ISSUES_PER_PAGE,
+            },
+          }
+        );
+
+        if (cancelled) return;
+
+        setIssues(response.data.items);
+        setTotalIssues(response.data.total);
+        setTotalPages(response.data.total_pages);
+      } catch (err: any) {
+          if (cancelled) return;
+
+          toast.error(
+            err.response?.data?.detail ?? "Could not load your issues."
+          );
+    } finally {
+        if (!cancelled) setLoading(false);
+      }
+    }
+
+    loadIssues();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [
+    search,
+    projectFilter,
+    statusFilter,
+    severityFilter,
+    currentPage,
+  ]);
+
+  // Project options are based on projects represented in the results.
   const projects = useMemo(
     () =>
       [...new Set(issues.map((issue) => issue.project_id))].sort(
@@ -92,69 +144,6 @@ export default function MyIssues() {
     [issues]
   );
 
-  const filteredIssues = useMemo(() => {
-    const query = search.trim().toLowerCase();
-
-    return issues.filter((issue) => {
-      const matchesSearch =
-        !query ||
-        issue.title.toLowerCase().includes(query) ||
-        (issue.description ?? "").toLowerCase().includes(query);
-
-      return (
-        matchesSearch &&
-        (projectFilter === "all" ||
-          issue.project_id === Number(projectFilter)) &&
-        (statusFilter === "all" || issue.status === statusFilter) &&
-        (severityFilter === "all" ||
-          issue.severity === severityFilter) &&
-        (priorityFilter === "all" ||
-          issue.priority === priorityFilter)
-      );
-    });
-  }, [
-    issues,
-    search,
-    projectFilter,
-    statusFilter,
-    severityFilter,
-    priorityFilter,
-  ]);
-
-  // Calculate the total number of pages after filtering.
-  const totalPages = Math.max(
-    1,
-    Math.ceil(filteredIssues.length / ISSUES_PER_PAGE)
-  );
-
-  // Get only the issues for the current page.
-  const paginatedIssues = useMemo(
-    () =>
-      filteredIssues.slice(
-        (currentPage - 1) * ISSUES_PER_PAGE,
-        currentPage * ISSUES_PER_PAGE
-      ),
-    [filteredIssues, currentPage]
-  );
-
-  // Return to page 1 whenever the search or filters change.
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [
-    search,
-    projectFilter,
-    statusFilter,
-    severityFilter,
-    priorityFilter,
-  ]);
-
-  // Keep the current page valid if the number of results decreases.
-  useEffect(() => {
-    if (currentPage > totalPages) {
-      setCurrentPage(totalPages);
-    }
-  }, [currentPage, totalPages]);
-
   async function handleStatusChange(
     issue: Issue,
     newStatus: Status
@@ -162,52 +151,63 @@ export default function MyIssues() {
     if (issue.status === newStatus) return;
 
     setUpdatingId(issue.id);
-    setUpdateError("");
 
     try {
-      const response = await api.patch<Issue>(
-        `/issues/${issue.id}/status`,
-        { status: newStatus }
+      await api.patch<Issue>(`/issues/${issue.id}/status`, {
+        status: newStatus,
+      });
+
+      // Reload the current page so server-side filters and counts
+      // remain accurate after a status change.
+      const response = await api.get<PaginatedIssuesResponse>(
+        "/issues/my-issues",
+        {
+          params: {
+            search: search.trim() || undefined,
+            project_id:
+              projectFilter === "all"
+                ? undefined
+                : Number(projectFilter),
+            status:
+              statusFilter === "all" ? undefined : statusFilter,
+            severity:
+              severityFilter === "all" ? undefined : severityFilter,
+            page: currentPage,
+            page_size: ISSUES_PER_PAGE,
+          },
+        }
       );
 
-      setIssues((current) =>
-        current.map((item) =>
-          item.id === issue.id ? response.data : item
-        )
-      );
+      setIssues(response.data.items);
+      setTotalIssues(response.data.total);
+      setTotalPages(response.data.total_pages);
     } catch (err: any) {
-      setUpdateError(
-        err.response?.data?.detail ?? "Could not update issue status."
-      );
+        toast.error(
+          err.response?.data?.detail ?? "Could not update issue status."
+        );
     } finally {
       setUpdatingId(null);
     }
   }
 
-  if (loading) return <p>Loading your issues...</p>;
-
-  if (error) {
-    return (
-      <main className="dashboard-page">
-        <section className="dashboard-content">
-          <h1>My Issues</h1>
-          <p role="alert">{error}</p>
-        </section>
-      </main>
-    );
+  if (loading && issues.length === 0) {
+    return <p>Loading your issues...</p>;
   }
+
+
+  const firstIssue =
+    totalIssues === 0 ? 0 : (currentPage - 1) * ISSUES_PER_PAGE + 1;
+
+  const lastIssue = Math.min(
+    currentPage * ISSUES_PER_PAGE,
+    totalIssues
+  );
 
   return (
     <main className="dashboard-page">
       <section className="dashboard-content">
         <h1>My Issues</h1>
         <p>Issues assigned to you.</p>
-
-        {updateError && (
-          <p role="alert" className="issue-update-error">
-            {updateError}
-          </p>
-        )}
 
         <div className="issue-filters">
           <input
@@ -256,26 +256,14 @@ export default function MyIssues() {
               </option>
             ))}
           </select>
-
-          <select
-            value={priorityFilter}
-            onChange={(event) => setPriorityFilter(event.target.value)}
-            aria-label="Filter by priority"
-          >
-            <option value="all">All priorities</option>
-            {PRIORITIES.map((priority) => (
-              <option key={priority} value={priority}>
-                {formatLabel(priority)}
-              </option>
-            ))}
-          </select>
         </div>
 
         <p>
-          {filteredIssues.length} shown · {issues.length} total
+          {totalIssues} matching issue(s)
+          {loading ? " · Updating..." : ""}
         </p>
 
-        {filteredIssues.length === 0 ? (
+        {totalIssues === 0 ? (
           <p>No issues match your filters.</p>
         ) : (
           <>
@@ -287,7 +275,6 @@ export default function MyIssues() {
                     <th>Project</th>
                     <th>Status</th>
                     <th>Severity</th>
-                    <th>Priority</th>
                     <th>Created</th>
                     <th>Estimated</th>
                     <th>Due Date</th>
@@ -296,12 +283,10 @@ export default function MyIssues() {
                 </thead>
 
                 <tbody>
-                  {paginatedIssues.map((issue) => (
+                  {issues.map((issue) => (
                     <tr key={issue.id}>
                       <td>
-                        <strong>
-                           {issue.title}
-                        </strong>
+                        <strong>{issue.title}</strong>
                         <p>{issue.description}</p>
                       </td>
 
@@ -317,7 +302,7 @@ export default function MyIssues() {
                               event.target.value as Status
                             )
                           }
-                          aria-label={`Update status for issue ${issue.id}`}
+                          aria-label={`Update status for ${issue.title}`}
                         >
                           {STATUSES.map((status) => (
                             <option key={status} value={status}>
@@ -332,7 +317,6 @@ export default function MyIssues() {
                       </td>
 
                       <td>{formatLabel(issue.severity)}</td>
-                      <td>{formatLabel(issue.priority)}</td>
 
                       <td>{formatDate(issue.created_at)}</td>
 
@@ -358,39 +342,28 @@ export default function MyIssues() {
 
             <div className="issues-pagination">
               <span>
-                Showing{" "}
-                {(currentPage - 1) * ISSUES_PER_PAGE + 1}
-                {"–"}
-                {Math.min(
-                  currentPage * ISSUES_PER_PAGE,
-                  filteredIssues.length
-                )}{" "}
-                of {filteredIssues.length} issues
+                Showing {firstIssue}–{lastIssue} of {totalIssues} issues
               </span>
 
               <div className="issues-pagination-controls">
                 <button
                   type="button"
-                  disabled={currentPage === 1}
-                  onClick={() =>
-                    setCurrentPage((page) => Math.max(1, page - 1))
-                  }
+                  disabled={currentPage <= 1 || loading}
+                  onClick={() => setCurrentPage((page) => page - 1)}
                 >
                   Previous
                 </button>
 
                 <span>
-                  Page {currentPage} of {totalPages}
+                  Page {currentPage} of {Math.max(1, totalPages)}
                 </span>
 
                 <button
                   type="button"
-                  disabled={currentPage >= totalPages}
-                  onClick={() =>
-                    setCurrentPage((page) =>
-                      Math.min(totalPages, page + 1)
-                    )
+                  disabled={
+                    currentPage >= totalPages || loading
                   }
+                  onClick={() => setCurrentPage((page) => page + 1)}
                 >
                   Next
                 </button>

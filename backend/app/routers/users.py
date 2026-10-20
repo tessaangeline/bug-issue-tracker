@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 from pydantic import BaseModel, EmailStr
 
@@ -42,14 +42,29 @@ def admin_test(
     return {"message": "You are a super admin!"}
 
 
-@router.get("/", response_model=list[UserResponse])
+@router.get("/")
 def get_users(
+    page: int = Query(default=1, ge=1),
+    page_size: int = Query(default=10, ge=1, le=100),
+    search: str = "",
+    role: str | None = None,
+    sort_order: str = Query(
+        default="name-asc",
+        pattern="^(name-asc|name-desc)$",
+    ),
     db: Session = Depends(get_db),
     current_user: User = Depends(
         require_role([UserRole.SUPER_ADMIN])
     ),
 ):
-    return user_service.get_users(db)
+    return user_service.get_users(
+        db,
+        page=page,
+        page_size=page_size,
+        search=search,
+        role=role,
+        sort_order=sort_order,
+    )
 
 
 @router.put("/{user_id}", response_model=UserResponse)
