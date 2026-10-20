@@ -1,11 +1,10 @@
+import { useEffect, useMemo, useState } from 'react';
+import api from '../api/axios';
+import './MyIssues.css';
+import { toast } from 'sonner';
 
-import { useEffect, useMemo, useState } from "react";
-import api from "../api/axios";
-import "./MyIssues.css";
-import {toast} from "sonner";
-
-type Status = "open" | "in_progress" | "in_review" | "closed";
-type Severity = "low" | "medium" | "high" | "critical";
+type Status = 'open' | 'in_progress' | 'in_review' | 'closed';
+type Severity = 'low' | 'medium' | 'high' | 'critical';
 
 type Issue = {
   id: number;
@@ -32,31 +31,19 @@ type PaginatedIssuesResponse = {
 
 const ISSUES_PER_PAGE = 10;
 
-const STATUSES: Status[] = [
-  "open",
-  "in_progress",
-  "in_review",
-  "closed",
-];
+const STATUSES: Status[] = ['open', 'in_progress', 'in_review', 'closed'];
 
-const SEVERITIES: Severity[] = [
-  "low",
-  "medium",
-  "high",
-  "critical",
-];
+const SEVERITIES: Severity[] = ['low', 'medium', 'high', 'critical'];
 
 const formatLabel = (value: string) =>
-  value.replaceAll("_", " ").replace(/\b\w/g, (char) =>
-    char.toUpperCase()
-  );
+  value.replaceAll('_', ' ').replace(/\b\w/g, (char) => char.toUpperCase());
 
 const formatDate = (value: string | null | undefined) => {
-  if (!value) return "—";
+  if (!value) return '—';
 
   const date = new Date(value);
 
-  if (Number.isNaN(date.getTime())) return "—";
+  if (Number.isNaN(date.getTime())) return '—';
 
   return date.toLocaleDateString();
 };
@@ -66,11 +53,10 @@ export default function MyIssues() {
   const [loading, setLoading] = useState(true);
   const [updatingId, setUpdatingId] = useState<number | null>(null);
 
-
-  const [search, setSearch] = useState("");
-  const [projectFilter, setProjectFilter] = useState("all");
-  const [statusFilter, setStatusFilter] = useState("all");
-  const [severityFilter, setSeverityFilter] = useState("all");
+  const [search, setSearch] = useState('');
+  const [projectFilter, setProjectFilter] = useState('all');
+  const [statusFilter, setStatusFilter] = useState('all');
+  const [severityFilter, setSeverityFilter] = useState('all');
 
   const [currentPage, setCurrentPage] = useState(1);
   const [totalIssues, setTotalIssues] = useState(0);
@@ -88,22 +74,18 @@ export default function MyIssues() {
 
       try {
         const response = await api.get<PaginatedIssuesResponse>(
-          "/issues/my-issues",
+          '/issues/my-issues',
           {
             params: {
               search: search.trim() || undefined,
               project_id:
-                projectFilter === "all"
-                  ? undefined
-                  : Number(projectFilter),
-              status:
-                statusFilter === "all" ? undefined : statusFilter,
-              severity:
-                severityFilter === "all" ? undefined : severityFilter,
+                projectFilter === 'all' ? undefined : Number(projectFilter),
+              status: statusFilter === 'all' ? undefined : statusFilter,
+              severity: severityFilter === 'all' ? undefined : severityFilter,
               page: currentPage,
               page_size: ISSUES_PER_PAGE,
             },
-          }
+          },
         );
 
         if (cancelled) return;
@@ -112,12 +94,12 @@ export default function MyIssues() {
         setTotalIssues(response.data.total);
         setTotalPages(response.data.total_pages);
       } catch (err: any) {
-          if (cancelled) return;
+        if (cancelled) return;
 
-          toast.error(
-            err.response?.data?.detail ?? "Could not load your issues."
-          );
-    } finally {
+        toast.error(
+          err.response?.data?.detail ?? 'Could not load your issues.',
+        );
+      } finally {
         if (!cancelled) setLoading(false);
       }
     }
@@ -127,27 +109,18 @@ export default function MyIssues() {
     return () => {
       cancelled = true;
     };
-  }, [
-    search,
-    projectFilter,
-    statusFilter,
-    severityFilter,
-    currentPage,
-  ]);
+  }, [search, projectFilter, statusFilter, severityFilter, currentPage]);
 
   // Project options are based on projects represented in the results.
   const projects = useMemo(
     () =>
       [...new Set(issues.map((issue) => issue.project_id))].sort(
-        (a, b) => a - b
+        (a, b) => a - b,
       ),
-    [issues]
+    [issues],
   );
 
-  async function handleStatusChange(
-    issue: Issue,
-    newStatus: Status
-  ) {
+  async function handleStatusChange(issue: Issue, newStatus: Status) {
     if (issue.status === newStatus) return;
 
     setUpdatingId(issue.id);
@@ -160,31 +133,27 @@ export default function MyIssues() {
       // Reload the current page so server-side filters and counts
       // remain accurate after a status change.
       const response = await api.get<PaginatedIssuesResponse>(
-        "/issues/my-issues",
+        '/issues/my-issues',
         {
           params: {
             search: search.trim() || undefined,
             project_id:
-              projectFilter === "all"
-                ? undefined
-                : Number(projectFilter),
-            status:
-              statusFilter === "all" ? undefined : statusFilter,
-            severity:
-              severityFilter === "all" ? undefined : severityFilter,
+              projectFilter === 'all' ? undefined : Number(projectFilter),
+            status: statusFilter === 'all' ? undefined : statusFilter,
+            severity: severityFilter === 'all' ? undefined : severityFilter,
             page: currentPage,
             page_size: ISSUES_PER_PAGE,
           },
-        }
+        },
       );
 
       setIssues(response.data.items);
       setTotalIssues(response.data.total);
       setTotalPages(response.data.total_pages);
     } catch (err: any) {
-        toast.error(
-          err.response?.data?.detail ?? "Could not update issue status."
-        );
+      toast.error(
+        err.response?.data?.detail ?? 'Could not update issue status.',
+      );
     } finally {
       setUpdatingId(null);
     }
@@ -194,14 +163,10 @@ export default function MyIssues() {
     return <p>Loading your issues...</p>;
   }
 
-
   const firstIssue =
     totalIssues === 0 ? 0 : (currentPage - 1) * ISSUES_PER_PAGE + 1;
 
-  const lastIssue = Math.min(
-    currentPage * ISSUES_PER_PAGE,
-    totalIssues
-  );
+  const lastIssue = Math.min(currentPage * ISSUES_PER_PAGE, totalIssues);
 
   return (
     <main className="dashboard-page">
@@ -260,7 +225,7 @@ export default function MyIssues() {
 
         <p>
           {totalIssues} matching issue(s)
-          {loading ? " · Updating..." : ""}
+          {loading ? ' · Updating...' : ''}
         </p>
 
         {totalIssues === 0 ? (
@@ -299,7 +264,7 @@ export default function MyIssues() {
                           onChange={(event) =>
                             handleStatusChange(
                               issue,
-                              event.target.value as Status
+                              event.target.value as Status,
                             )
                           }
                           aria-label={`Update status for ${issue.title}`}
@@ -311,9 +276,7 @@ export default function MyIssues() {
                           ))}
                         </select>
 
-                        {updatingId === issue.id && (
-                          <small> Saving...</small>
-                        )}
+                        {updatingId === issue.id && <small> Saving...</small>}
                       </td>
 
                       <td>{formatLabel(issue.severity)}</td>
@@ -323,16 +286,16 @@ export default function MyIssues() {
                       <td>
                         {issue.estimated_duration_days != null
                           ? `${issue.estimated_duration_days} day(s)`
-                          : "Not set"}
+                          : 'Not set'}
                       </td>
 
                       <td>{formatDate(issue.due_date)}</td>
 
                       <td>
-                        {issue.status === "closed" &&
+                        {issue.status === 'closed' &&
                         issue.actual_duration_days != null
                           ? `${issue.actual_duration_days} day(s)`
-                          : "Pending"}
+                          : 'Pending'}
                       </td>
                     </tr>
                   ))}
@@ -360,9 +323,7 @@ export default function MyIssues() {
 
                 <button
                   type="button"
-                  disabled={
-                    currentPage >= totalPages || loading
-                  }
+                  disabled={currentPage >= totalPages || loading}
                   onClick={() => setCurrentPage((page) => page + 1)}
                 >
                   Next

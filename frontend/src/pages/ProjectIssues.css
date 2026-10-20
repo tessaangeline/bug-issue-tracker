@@ -1,4 +1,3 @@
-
 /* ========================================
    PROJECT ISSUES — LIGHT THEME
    ======================================== */
@@ -66,7 +65,9 @@
   font-size: 13px;
   font-weight: 700;
   cursor: pointer;
-  transition: background 0.2s, transform 0.2s;
+  transition:
+    background 0.2s,
+    transform 0.2s;
 }
 
 .issues-create-button:hover {
@@ -147,7 +148,9 @@
   font: inherit;
   font-size: 13px;
   outline: none;
-  transition: border-color 0.2s, box-shadow 0.2s;
+  transition:
+    border-color 0.2s,
+    box-shadow 0.2s;
 }
 
 .create-issue-form input::placeholder,
@@ -639,7 +642,6 @@
   }
 }
 
-
 .issue-actions {
   white-space: nowrap;
 }
@@ -655,7 +657,9 @@
   background: #ffffff;
   color: #475569;
   cursor: pointer;
-  transition: background 0.2s ease, color 0.2s ease;
+  transition:
+    background 0.2s ease,
+    color 0.2s ease;
 }
 
 .issue-action-btn:hover {
@@ -673,7 +677,6 @@
   color: #dc2626;
   border-color: #fecaca;
 }
-
 
 /* ========================================
    PROJECT MEMBER MANAGEMENT
@@ -715,7 +718,7 @@
 }
 
 /* Add member label */
-.project-info-block label[for="add-project-member"] {
+.project-info-block label[for='add-project-member'] {
   display: block;
   margin-bottom: 8px;
   color: #303750;
@@ -782,7 +785,7 @@
     overflow-wrap: anywhere;
   }
 
-  .project-info-block > div[style*="margin-top"] > div {
+  .project-info-block > div[style*='margin-top'] > div {
     flex-direction: column;
   }
 
@@ -794,7 +797,6 @@
     align-self: flex-start;
   }
 }
-
 
 .issue-status-select {
   max-width: 150px;

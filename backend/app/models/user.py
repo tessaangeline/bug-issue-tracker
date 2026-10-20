@@ -1,10 +1,9 @@
-from sqlalchemy import Enum as SQLEnum, ForeignKey
-
 from enum import Enum
 
-from sqlalchemy.orm import Mapped, mapped_column
-
 from backend.app.db.base import Base
+from sqlalchemy import Enum as SQLEnum
+from sqlalchemy import ForeignKey
+from sqlalchemy.orm import Mapped, mapped_column
 
 
 class UserRole(str, Enum):
@@ -21,11 +20,13 @@ class User(Base):
     email: Mapped[str] = mapped_column(unique=True)
     password_hash: Mapped[str] = mapped_column()
     role: Mapped[UserRole] = mapped_column(
-        SQLEnum(UserRole, name="user_role", values_callable=lambda enum: [
-                member.value for member in enum])
+        SQLEnum(
+            UserRole,
+            name="user_role",
+            values_callable=lambda enum: [member.value for member in enum],
+        )
     )
     project_id: Mapped[int | None] = mapped_column(
-        ForeignKey("projects.id"),
-        nullable=True
+        ForeignKey("projects.id"), nullable=True
     )
     token_version: Mapped[int] = mapped_column(default=0)

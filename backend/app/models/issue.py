@@ -1,10 +1,11 @@
-from sqlalchemy import Enum as SQLEnum, ForeignKey, DateTime, Float
-from enum import Enum
-from sqlalchemy.orm import Mapped, mapped_column
-from sqlalchemy.sql import func
 from datetime import datetime
+from enum import Enum
 
 from backend.app.db.base import Base
+from sqlalchemy import DateTime, Float, ForeignKey
+from sqlalchemy import Enum as SQLEnum
+from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.sql import func
 
 
 class IssueStatus(str, Enum):
@@ -28,20 +29,23 @@ class Issue(Base):
     title: Mapped[str] = mapped_column()
     description: Mapped[str] = mapped_column()
     status: Mapped[IssueStatus] = mapped_column(
-        SQLEnum(IssueStatus, name="issue_status", values_callable=lambda enum: [
-            member.value for member in enum])
+        SQLEnum(
+            IssueStatus,
+            name="issue_status",
+            values_callable=lambda enum: [member.value for member in enum],
+        )
     )
     severity: Mapped[IssueSeverity] = mapped_column(
-        SQLEnum(IssueSeverity, name="issue_severity", values_callable=lambda enum: [
-            member.value for member in enum])
+        SQLEnum(
+            IssueSeverity,
+            name="issue_severity",
+            values_callable=lambda enum: [member.value for member in enum],
+        )
     )
 
-    project_id: Mapped[int] = mapped_column(
-        ForeignKey("projects.id")
-    )
+    project_id: Mapped[int] = mapped_column(ForeignKey("projects.id"))
     assignee_id: Mapped[int | None] = mapped_column(
-        ForeignKey("users.id"),
-        nullable=True
+        ForeignKey("users.id"), nullable=True
     )
 
     # Automatically records when the issue is created

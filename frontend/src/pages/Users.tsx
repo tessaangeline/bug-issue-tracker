@@ -1,8 +1,7 @@
-
-import { useEffect, useRef, useState, type FormEvent } from "react";
-import api from "../api/axios";
-import "./Users.css";
-import { toast } from "sonner";
+import { useEffect, useRef, useState, type FormEvent } from 'react';
+import api from '../api/axios';
+import './Users.css';
+import { toast } from 'sonner';
 
 type User = {
   id: number;
@@ -11,7 +10,7 @@ type User = {
   role: string;
 };
 
-type EditableRole = "project_member" | "project_manager";
+type EditableRole = 'project_member' | 'project_manager';
 
 type PaginatedUsersResponse = {
   items: User[];
@@ -27,11 +26,10 @@ export default function Users() {
   const [users, setUsers] = useState<User[]>([]);
 
   // Create user form
-  const [name, setName] = useState("");
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [role, setRole] =
-    useState<EditableRole>("project_member");
+  const [name, setName] = useState('');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [role, setRole] = useState<EditableRole>('project_member');
 
   // Loading and action states
   const [loading, setLoading] = useState(true);
@@ -41,19 +39,18 @@ export default function Users() {
 
   // Edit user form
   const [editingUser, setEditingUser] = useState<User | null>(null);
-  const [editName, setEditName] = useState("");
-  const [editEmail, setEditEmail] = useState("");
-  const [editRole, setEditRole] =
-    useState<EditableRole>("project_member");
+  const [editName, setEditName] = useState('');
+  const [editEmail, setEditEmail] = useState('');
+  const [editRole, setEditRole] = useState<EditableRole>('project_member');
 
   // Messages and notifications
-  const [message, setMessage] = useState("");
-  const [error, setError] = useState("");
+  const [message, setMessage] = useState('');
+  const [error, setError] = useState('');
 
   // Search, filtering and sorting
-  const [search, setSearch] = useState("");
-  const [roleFilter, setRoleFilter] = useState("all");
-  const [sortOrder, setSortOrder] = useState("name-asc");
+  const [search, setSearch] = useState('');
+  const [roleFilter, setRoleFilter] = useState('all');
+  const [sortOrder, setSortOrder] = useState('name-asc');
 
   // Backend pagination
   const [currentPage, setCurrentPage] = useState(1);
@@ -69,14 +66,14 @@ export default function Users() {
       }
     )?.response?.data?.detail;
 
-    return typeof detail === "string" ? detail : fallback;
+    return typeof detail === 'string' ? detail : fallback;
   }
 
   async function fetchUsers(page = currentPage) {
     setLoading(true);
 
     try {
-      const response = await api.get<PaginatedUsersResponse>("/users/", {
+      const response = await api.get<PaginatedUsersResponse>('/users/', {
         params: {
           page,
           page_size: USERS_PER_PAGE,
@@ -92,7 +89,7 @@ export default function Users() {
       setTotalUsers(data.total);
       setCurrentPage(data.page);
       setTotalPages(Math.max(1, data.total_pages));
-      setError("");
+      setError('');
     } catch {
       setError("Couldn't load users. Please try again.");
     } finally {
@@ -109,32 +106,32 @@ export default function Users() {
   // Create a user
   async function handleCreateUser(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    setMessage("");
-    setError("");
+    setMessage('');
+    setError('');
     setCreating(true);
 
     try {
-      await api.post("/users/", {
+      await api.post('/users/', {
         name: name.trim(),
         email: email.trim(),
         password,
         role,
       });
 
-      setName("");
-      setEmail("");
-      setPassword("");
-      setRole("project_member");
+      setName('');
+      setEmail('');
+      setPassword('');
+      setRole('project_member');
 
-      setMessage("User created successfully!");
-      toast.success("User created successfully!");
+      setMessage('User created successfully!');
+      toast.success('User created successfully!');
 
       setCurrentPage(1);
       await fetchUsers(1);
     } catch (err: unknown) {
       const errorMessage = getErrorMessage(
         err,
-        "Couldn't create user. Please check the details and try again."
+        "Couldn't create user. Please check the details and try again.",
       );
 
       setError(errorMessage);
@@ -146,11 +143,8 @@ export default function Users() {
 
   // Start editing a user
   function startEditing(user: User) {
-     console.log("Edit clicked:", user);
-    if (
-      user.role !== "project_member" &&
-      user.role !== "project_manager"
-    ) {
+    console.log('Edit clicked:', user);
+    if (user.role !== 'project_member' && user.role !== 'project_manager') {
       toast.error("This account's role cannot be edited here.");
       return;
     }
@@ -159,13 +153,13 @@ export default function Users() {
     setEditName(user.name);
     setEditEmail(user.email);
     setEditRole(user.role);
-    setMessage("");
-    setError("");
+    setMessage('');
+    setError('');
 
     setTimeout(() => {
       editFormRef.current?.scrollIntoView({
-        behavior: "smooth",
-        block: "start",
+        behavior: 'smooth',
+        block: 'start',
       });
     }, 100);
   }
@@ -173,9 +167,9 @@ export default function Users() {
   // Cancel editing
   function cancelEditing() {
     setEditingUser(null);
-    setEditName("");
-    setEditEmail("");
-    setEditRole("project_member");
+    setEditName('');
+    setEditEmail('');
+    setEditRole('project_member');
   }
 
   // Save edited user
@@ -185,7 +179,7 @@ export default function Users() {
     if (!editingUser) return;
 
     setSavingEdit(true);
-    setError("");
+    setError('');
 
     try {
       await api.put(`/users/${editingUser.id}`, {
@@ -194,15 +188,15 @@ export default function Users() {
         role: editRole,
       });
 
-      toast.success("User updated successfully!");
+      toast.success('User updated successfully!');
       cancelEditing();
       await fetchUsers(currentPage);
     } catch (err: unknown) {
       toast.error(
         getErrorMessage(
           err,
-          "Couldn't update user. Please check the details and try again."
-        )
+          "Couldn't update user. Please check the details and try again.",
+        ),
       );
     } finally {
       setSavingEdit(false);
@@ -212,7 +206,7 @@ export default function Users() {
   // Delete a user
   async function handleDeleteUser(user: User) {
     const confirmed = window.confirm(
-      `Are you sure you want to delete ${user.name} (${user.email})? This action cannot be undone.`
+      `Are you sure you want to delete ${user.name} (${user.email})? This action cannot be undone.`,
     );
 
     if (!confirmed) return;
@@ -222,25 +216,20 @@ export default function Users() {
     try {
       await api.delete(`/users/${user.id}`);
 
-      toast.success( `${user.name} was deleted successfully.`);
+      toast.success(`${user.name} was deleted successfully.`);
 
       if (editingUser?.id === user.id) {
         cancelEditing();
       }
 
       const nextPage =
-        users.length === 1 && currentPage > 1
-          ? currentPage - 1
-          : currentPage;
+        users.length === 1 && currentPage > 1 ? currentPage - 1 : currentPage;
 
       setCurrentPage(nextPage);
       await fetchUsers(nextPage);
     } catch (err: unknown) {
       toast.error(
-        getErrorMessage(
-          err,
-          "Couldn't delete the user. Please try again."
-        )
+        getErrorMessage(err, "Couldn't delete the user. Please try again."),
       );
     } finally {
       setDeletingId(null);
@@ -248,28 +237,25 @@ export default function Users() {
   }
 
   function formatRole(userRole: string) {
-    if (userRole === "super_admin") return "Super Admin";
+    if (userRole === 'super_admin') return 'Super Admin';
 
     return userRole
-      .split("_")
+      .split('_')
       .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
-      .join(" ");
+      .join(' ');
   }
 
   function clearFilters() {
-    setSearch("");
-    setRoleFilter("all");
-    setSortOrder("name-asc");
+    setSearch('');
+    setRoleFilter('all');
+    setSortOrder('name-asc');
     setCurrentPage(1);
   }
 
   const firstUser =
     totalUsers === 0 ? 0 : (currentPage - 1) * USERS_PER_PAGE + 1;
 
-  const lastUser = Math.min(
-    currentPage * USERS_PER_PAGE,
-    totalUsers
-  );
+  const lastUser = Math.min(currentPage * USERS_PER_PAGE, totalUsers);
 
   return (
     <main className="users-page">
@@ -353,9 +339,7 @@ export default function Users() {
               minLength={8}
               required
             />
-            <span className="field-hint">
-              Use at least 8 characters.
-            </span>
+            <span className="field-hint">Use at least 8 characters.</span>
           </div>
 
           <div className="form-field">
@@ -363,9 +347,7 @@ export default function Users() {
             <select
               id="user-role"
               value={role}
-              onChange={(e) =>
-                setRole(e.target.value as EditableRole)
-              }
+              onChange={(e) => setRole(e.target.value as EditableRole)}
               className="role-select"
             >
               <option value="project_member">Project Member</option>
@@ -376,30 +358,19 @@ export default function Users() {
             </span>
           </div>
 
-          <button
-            className="create-button"
-            type="submit"
-            disabled={creating}
-          >
-            {creating ? "Creating account..." : "Create user"}
+          <button className="create-button" type="submit" disabled={creating}>
+            {creating ? 'Creating account...' : 'Create user'}
           </button>
 
-          {message && (
-            <p className="form-message success">{message}</p>
-          )}
+          {message && <p className="form-message success">{message}</p>}
 
-          {error && (
-            <p className="form-message error">{error}</p>
-          )}
+          {error && <p className="form-message error">{error}</p>}
         </form>
       </section>
 
       {/* Edit user */}
       {editingUser && (
-        <section
-          ref={editFormRef}
-          className="users-card edit-card"
-        >
+        <section ref={editFormRef} className="users-card edit-card">
           <div className="section-heading">
             <div className="section-icon">
               <span aria-hidden="true">✎</span>
@@ -442,9 +413,7 @@ export default function Users() {
                 id="edit-user-role"
                 className="role-select"
                 value={editRole}
-                onChange={(e) =>
-                  setEditRole(e.target.value as EditableRole)
-                }
+                onChange={(e) => setEditRole(e.target.value as EditableRole)}
               >
                 <option value="project_member">Project Member</option>
                 <option value="project_manager">Project Manager</option>
@@ -460,7 +429,7 @@ export default function Users() {
                 type="submit"
                 disabled={savingEdit}
               >
-                {savingEdit ? "Saving changes..." : "Save changes"}
+                {savingEdit ? 'Saving changes...' : 'Save changes'}
               </button>
 
               <button
@@ -484,9 +453,7 @@ export default function Users() {
             <p>Search accounts and filter them by role.</p>
           </div>
 
-          <span className="user-count-badge">
-            {totalUsers} accounts
-          </span>
+          <span className="user-count-badge">{totalUsers} accounts</span>
         </div>
 
         {/* Search, role filter and sorting */}
@@ -556,9 +523,9 @@ export default function Users() {
           <p className="table-state error">{error}</p>
         ) : users.length === 0 ? (
           <p className="table-state">
-            {search.trim() || roleFilter !== "all"
-              ? "No users match your search or selected filters."
-              : "No users found yet."}
+            {search.trim() || roleFilter !== 'all'
+              ? 'No users match your search or selected filters.'
+              : 'No users found yet.'}
           </p>
         ) : (
           <>
@@ -575,7 +542,7 @@ export default function Users() {
 
                 <tbody>
                   {users.map((user) => {
-                    const isSuperAdmin = user.role === "super_admin";
+                    const isSuperAdmin = user.role === 'super_admin';
 
                     return (
                       <tr key={user.id}>
@@ -593,7 +560,7 @@ export default function Users() {
                         <td>
                           <span
                             className={`role-pill ${
-                              isSuperAdmin ? "admin-role" : ""
+                              isSuperAdmin ? 'admin-role' : ''
                             }`}
                           >
                             {formatRole(user.role)}
@@ -609,8 +576,8 @@ export default function Users() {
                               disabled={isSuperAdmin || savingEdit}
                               title={
                                 isSuperAdmin
-                                  ? "Super Admin accounts cannot be edited here"
-                                  : "Edit user"
+                                  ? 'Super Admin accounts cannot be edited here'
+                                  : 'Edit user'
                               }
                             >
                               Edit
@@ -620,18 +587,16 @@ export default function Users() {
                               type="button"
                               className="action-button delete-button"
                               onClick={() => void handleDeleteUser(user)}
-                              disabled={
-                                isSuperAdmin || deletingId === user.id
-                              }
+                              disabled={isSuperAdmin || deletingId === user.id}
                               title={
                                 isSuperAdmin
-                                  ? "Super Admin accounts cannot be deleted here"
-                                  : "Delete user"
+                                  ? 'Super Admin accounts cannot be deleted here'
+                                  : 'Delete user'
                               }
                             >
                               {deletingId === user.id
-                                ? "Deleting..."
-                                : "Delete"}
+                                ? 'Deleting...'
+                                : 'Delete'}
                             </button>
                           </div>
                         </td>

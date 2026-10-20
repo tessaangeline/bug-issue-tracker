@@ -1,8 +1,6 @@
+from backend.app.routers import auth, issues, projects, users
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-
-from backend.app.routers import users, auth
-from backend.app.routers import projects, issues
 
 app = FastAPI()
 

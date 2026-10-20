@@ -1,12 +1,10 @@
-
 from datetime import datetime, timedelta, timezone
-
-from pydantic import BaseModel, Field, computed_field, field_validator
 
 from backend.app.models.issue import (
     IssueSeverity,
     IssueStatus,
 )
+from pydantic import BaseModel, Field, computed_field, field_validator
 
 
 class IssueCreate(BaseModel):
@@ -27,8 +25,7 @@ class IssueCreate(BaseModel):
             return value
 
         if round(value, 2) != value:
-            raise ValueError(
-                "Estimated duration can have at most 2 decimal places.")
+            raise ValueError("Estimated duration can have at most 2 decimal places.")
 
         return value
 
@@ -54,9 +51,7 @@ class IssueResponse(BaseModel):
         if self.estimated_duration_days is None:
             return None
 
-        return self.created_at + timedelta(
-            days=self.estimated_duration_days
-        )
+        return self.created_at + timedelta(days=self.estimated_duration_days)
 
     @computed_field
     @property
@@ -95,8 +90,7 @@ class IssueUpdate(BaseModel):
             return value
 
         if round(value, 2) != value:
-            raise ValueError(
-                "Estimated duration can have at most 2 decimal places.")
+            raise ValueError("Estimated duration can have at most 2 decimal places.")
 
         return value
 

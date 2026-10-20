@@ -1,7 +1,6 @@
-from sqlalchemy import ForeignKey, String, Text, ARRAY, Integer
-from sqlalchemy.orm import Mapped, mapped_column
-
 from backend.app.db.base import Base
+from sqlalchemy import ARRAY, ForeignKey, Integer, String, Text
+from sqlalchemy.orm import Mapped, mapped_column
 
 
 class Project(Base):
@@ -15,4 +14,7 @@ class Project(Base):
         nullable=False,
     )
     member_ids: Mapped[list[int]] = mapped_column(
-        ARRAY(Integer), nullable=False, default=list,)
+        ARRAY(Integer),
+        nullable=False,
+        default=list,
+    )

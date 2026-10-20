@@ -1,4 +1,3 @@
-
 .users-page {
   min-height: 100vh;
   width: 100%;
@@ -63,7 +62,9 @@
   color: #475569;
   font-size: 13px;
   font-weight: 650;
-  transition: background 0.2s, border-color 0.2s;
+  transition:
+    background 0.2s,
+    border-color 0.2s;
 }
 
 .signout-button:hover:not(:disabled) {
@@ -200,7 +201,9 @@
   font: inherit;
   font-size: 14px;
   outline: none;
-  transition: border-color 0.2s, box-shadow 0.2s;
+  transition:
+    border-color 0.2s,
+    box-shadow 0.2s;
 }
 
 .form-field input::placeholder {
@@ -242,7 +245,9 @@
   font-size: 14px;
   font-weight: 650;
   cursor: pointer;
-  transition: background 0.2s, transform 0.2s;
+  transition:
+    background 0.2s,
+    transform 0.2s;
 }
 
 .create-button:hover:not(:disabled) {
@@ -305,7 +310,9 @@
   font-size: 13px;
   font-weight: 650;
   cursor: pointer;
-  transition: background 0.2s, border-color 0.2s;
+  transition:
+    background 0.2s,
+    border-color 0.2s;
 }
 
 .secondary-button:hover:not(:disabled) {
@@ -334,7 +341,9 @@
 
 .user-directory-filters {
   display: grid;
-  grid-template-columns: minmax(220px, 2fr) minmax(160px, 1fr) minmax(130px, 1fr) auto;
+  grid-template-columns:
+    minmax(220px, 2fr) minmax(160px, 1fr) minmax(130px, 1fr)
+    auto;
   align-items: end;
   gap: 14px;
   margin: 24px 0 12px;
@@ -494,7 +503,9 @@
   font-size: 12px;
   font-weight: 650;
   cursor: pointer;
-  transition: background 0.2s, border-color 0.2s;
+  transition:
+    background 0.2s,
+    border-color 0.2s;
 }
 
 .edit-button {

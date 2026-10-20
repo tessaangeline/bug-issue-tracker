@@ -1,14 +1,13 @@
-
-import { useState, type FormEvent } from "react";
-import axios from "axios";
-import api from "../api/axios";
-import "./Login.css";
-import { useNavigate } from "react-router-dom";
-import { toast } from "sonner";
+import { useState, type FormEvent } from 'react';
+import axios from 'axios';
+import api from '../api/axios';
+import './Login.css';
+import { useNavigate } from 'react-router-dom';
+import { toast } from 'sonner';
 
 export default function Login() {
-  const [username, setUsername] = useState("");
-  const [password, setPassword] = useState("");
+  const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
@@ -18,31 +17,29 @@ export default function Login() {
 
     try {
       const formData = new URLSearchParams(); //backend expects URL encoded form data
-      formData.append("username", username);
-      formData.append("password", password);
-        
-      const response = await api.post("/auth/login", formData, {
+      formData.append('username', username);
+      formData.append('password', password);
+
+      const response = await api.post('/auth/login', formData, {
         headers: {
-            "Content-Type": "application/x-www-form-urlencoded",
+          'Content-Type': 'application/x-www-form-urlencoded',
         },
-    });
+      });
 
-    console.log("Login response:", response.data);
+      console.log('Login response:', response.data);
 
-sessionStorage.setItem("access_token", response.data.access_token);
-sessionStorage.setItem("refresh_token", response.data.refresh_token);
+      sessionStorage.setItem('access_token', response.data.access_token);
+      sessionStorage.setItem('refresh_token', response.data.refresh_token);
 
-navigate("/");
-
-
+      navigate('/');
     } catch (err) {
       if (axios.isAxiosError(err)) {
         toast.error(
-          err.response?.data?.detail ??  //If the backend provides an error message, show it. Otherwise, show our default error.
-            "Unable to log in. Please check your credentials."
-        ); 
+          err.response?.data?.detail ?? //If the backend provides an error message, show it. Otherwise, show our default error.
+            'Unable to log in. Please check your credentials.',
+        );
       } else {
-        toast.error("Something went wrong. Please try again.");
+        toast.error('Something went wrong. Please try again.');
       }
     } finally {
       setLoading(false);
@@ -86,13 +83,11 @@ navigate("/");
             required
           />
           <button type="submit" disabled={loading}>
-            {loading ? "Signing in..." : "Sign in"}
+            {loading ? 'Signing in...' : 'Sign in'}
           </button>
         </form>
-            
-        <p className="login-footer">
-          BugTrack · Project and issue management
-        </p>
+
+        <p className="login-footer">BugTrack · Project and issue management</p>
       </section>
     </main>
   );

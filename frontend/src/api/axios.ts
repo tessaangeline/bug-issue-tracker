@@ -1,10 +1,10 @@
-import axios from "axios";
-import type { AxiosError, InternalAxiosRequestConfig } from "axios";
+import axios from 'axios';
+import type { AxiosError, InternalAxiosRequestConfig } from 'axios';
 
 const api = axios.create({
   baseURL: import.meta.env.VITE_API_BASE_URL,
   headers: {
-    Accept: "application/json",
+    Accept: 'application/json',
   },
 });
 
@@ -15,7 +15,7 @@ type RetryConfig = InternalAxiosRequestConfig & {
 let refreshInProgress: Promise<string> | null = null;
 
 api.interceptors.request.use((config) => {
-  const accessToken = sessionStorage.getItem("access_token");
+  const accessToken = sessionStorage.getItem('access_token');
 
   if (accessToken) {
     config.headers.Authorization = `Bearer ${accessToken}`;
@@ -33,18 +33,18 @@ api.interceptors.response.use(
       error.response?.status !== 401 ||
       !originalRequest ||
       originalRequest._retry ||
-      originalRequest.url?.includes("/auth/login") ||
-      originalRequest.url?.includes("/auth/refresh") ||
-      originalRequest.url?.includes("/auth/logout")
+      originalRequest.url?.includes('/auth/login') ||
+      originalRequest.url?.includes('/auth/refresh') ||
+      originalRequest.url?.includes('/auth/logout')
     ) {
       return Promise.reject(error);
     }
 
-    const refreshToken = sessionStorage.getItem("refresh_token");
+    const refreshToken = sessionStorage.getItem('refresh_token');
 
     if (!refreshToken) {
-      sessionStorage.removeItem("access_token");
-      window.location.href = "/login";
+      sessionStorage.removeItem('access_token');
+      window.location.href = '/login';
       return Promise.reject(error);
     }
 
@@ -53,17 +53,13 @@ api.interceptors.response.use(
     try {
       if (!refreshInProgress) {
         refreshInProgress = axios
-          .post(
-            `${import.meta.env.VITE_API_BASE_URL}/auth/refresh`,
-            null,
-            {
-              params: { refresh_token: refreshToken },
-              headers: { Accept: "application/json" },
-            }
-          )
+          .post(`${import.meta.env.VITE_API_BASE_URL}/auth/refresh`, null, {
+            params: { refresh_token: refreshToken },
+            headers: { Accept: 'application/json' },
+          })
           .then((response) => {
             const newAccessToken = response.data.access_token as string;
-            sessionStorage.setItem("access_token", newAccessToken);
+            sessionStorage.setItem('access_token', newAccessToken);
             return newAccessToken;
           })
           .finally(() => {
@@ -76,12 +72,12 @@ api.interceptors.response.use(
 
       return api(originalRequest);
     } catch (refreshError) {
-      sessionStorage.removeItem("access_token");
-      sessionStorage.removeItem("refresh_token");
-      window.location.href = "/login";
+      sessionStorage.removeItem('access_token');
+      sessionStorage.removeItem('refresh_token');
+      window.location.href = '/login';
       return Promise.reject(refreshError);
     }
-  }
+  },
 );
 
 export default api;

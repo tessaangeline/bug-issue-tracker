@@ -1,16 +1,17 @@
-from sqlalchemy.orm import Session
-from fastapi import HTTPException
-
 from backend.app.models.user import User, UserRole
-from backend.app.repositories import user_repository
-from backend.app.schemas.user import UserCreate
-from backend.app.security import hash_password, verify_password, create_access_token, create_refresh_token
+from backend.app.repositories import project_repository, user_repository
 from backend.app.schemas.user import UserCreate, UserUpdate
-from backend.app.repositories import project_repository
+from backend.app.security import (
+    create_access_token,
+    create_refresh_token,
+    hash_password,
+    verify_password,
+)
+from fastapi import HTTPException
+from sqlalchemy.orm import Session
 
 
 def create_user(db: Session, user_data: UserCreate) -> User:
-
     existing_user = user_repository.get_by_email(db, user_data.email)
 
     if existing_user:
@@ -32,7 +33,6 @@ def create_user(db: Session, user_data: UserCreate) -> User:
 
 
 def authenticate_user(db: Session, email: str, password: str):
-
     user = user_repository.get_by_email(db, email)
 
     if not user:
@@ -140,9 +140,7 @@ def delete_user(db: Session, user_id: int, current_user_id: int) -> None:
             detail="Super Admin accounts cannot be deleted here.",
         )
 
-    managed_projects = project_repository.get_projects_for_manager(
-        db, user_id
-    )
+    managed_projects = project_repository.get_projects_for_manager(db, user_id)
 
     if managed_projects:
         raise HTTPException(

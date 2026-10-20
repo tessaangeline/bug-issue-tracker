@@ -1,8 +1,7 @@
-from sqlalchemy.orm import Session
 from backend.app.models.issue import Issue, IssueStatus
-from backend.app.models.user import User
-
 from backend.app.models.project import Project
+from backend.app.models.user import User
+from sqlalchemy.orm import Session
 
 
 def create_project(db: Session, project: Project) -> Project:
@@ -21,11 +20,7 @@ def get_projects_for_manager(
     db: Session,
     manager_id: int,
 ) -> list[Project]:
-    return (
-        db.query(Project)
-        .filter(Project.manager_id == manager_id)
-        .all()
-    )
+    return db.query(Project).filter(Project.manager_id == manager_id).all()
 
 
 def get_open_issue_count(db: Session, project_id: int) -> int:
@@ -47,11 +42,7 @@ def get_projects_with_member(
     db: Session,
     user_id: int,
 ) -> list[Project]:
-    return (
-        db.query(Project)
-        .filter(Project.member_ids.any(user_id))
-        .all()
-    )
+    return db.query(Project).filter(Project.member_ids.any(user_id)).all()
 
 
 def update_project(db: Session, project: Project) -> Project:
@@ -94,17 +85,15 @@ def permanently_delete_project(
 ) -> None:
     try:
         # 1. Remove users' references to this project.
-        db.query(User).filter(
-            User.project_id == project.id
-        ).update(
+        db.query(User).filter(User.project_id == project.id).update(
             {User.project_id: None},
             synchronize_session=False,
         )
 
         # 2. Delete the project's associated issues.
-        db.query(Issue).filter(
-            Issue.project_id == project.id
-        ).delete(synchronize_session=False)
+        db.query(Issue).filter(Issue.project_id == project.id).delete(
+            synchronize_session=False
+        )
 
         # 3. Delete the project itself.
         db.delete(project)

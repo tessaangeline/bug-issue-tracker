@@ -1,12 +1,11 @@
 from backend.app.db.database import SessionLocal
 from backend.app.models.user import User, UserRole
-from backend.app.security import hash_password
 from backend.app.repositories import user_repository
+from backend.app.security import hash_password
 
 db = SessionLocal()
 
 try:
-
     admin = User(
         name="Demo Admin",
         email="admin@example.com",
@@ -14,10 +13,7 @@ try:
         role=UserRole.SUPER_ADMIN,
     )
 
-    existing_admin = user_repository.get_by_email(
-        db,
-        admin.email
-    )
+    existing_admin = user_repository.get_by_email(db, admin.email)
 
     if not existing_admin:
         db.add(admin)
@@ -29,10 +25,7 @@ try:
         role=UserRole.PROJECT_MANAGER,
     )
 
-    existing_manager = user_repository.get_by_email(
-        db,
-        manager.email
-    )
+    existing_manager = user_repository.get_by_email(db, manager.email)
 
     if not existing_manager:
         db.add(manager)
@@ -44,10 +37,7 @@ try:
         role=UserRole.PROJECT_MEMBER,
     )
 
-    existing_member = user_repository.get_by_email(
-        db,
-        member.email
-    )
+    existing_member = user_repository.get_by_email(db, member.email)
 
     if not existing_member:
         db.add(member)

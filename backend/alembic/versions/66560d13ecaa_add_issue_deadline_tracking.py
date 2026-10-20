@@ -1,4 +1,3 @@
-
 """add issue deadline tracking
 
 Revision ID: 66560d13ecaa
@@ -7,9 +6,9 @@ Revises: 053ea50057e5
 
 from typing import Sequence, Union
 
-from alembic import op
 import sqlalchemy as sa
 
+from alembic import op
 
 revision: str = "66560d13ecaa"
 down_revision: Union[str, Sequence[str], None] = "053ea50057e5"

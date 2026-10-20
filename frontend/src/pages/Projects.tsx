@@ -1,8 +1,7 @@
-
-import { useEffect, useMemo, useState } from "react";
-import api from "../api/axios";
-import "./Projects.css";
-import { toast } from "sonner";
+import { useEffect, useMemo, useState } from 'react';
+import api from '../api/axios';
+import './Projects.css';
+import { toast } from 'sonner';
 
 type User = {
   id: number;
@@ -29,11 +28,8 @@ type Project = {
   open_issue_count: number;
 };
 
-function getApiErrorMessage(
-  error: unknown,
-  fallback: string
-): string {
-  if (typeof error !== "object" || error === null) {
+function getApiErrorMessage(error: unknown, fallback: string): string {
+  if (typeof error !== 'object' || error === null) {
     return fallback;
   }
 
@@ -53,16 +49,16 @@ function getApiErrorMessage(
   const data = response?.data;
   const detail = data?.detail;
 
-  if (typeof detail === "string" && detail.trim()) {
+  if (typeof detail === 'string' && detail.trim()) {
     return detail;
   }
 
   if (Array.isArray(detail) && detail.length > 0) {
     return detail
       .map((item: unknown) => {
-        if (typeof item === "string") return item;
+        if (typeof item === 'string') return item;
 
-        if (typeof item === "object" && item !== null) {
+        if (typeof item === 'object' && item !== null) {
           const validation = item as {
             loc?: unknown;
             msg?: unknown;
@@ -72,32 +68,30 @@ function getApiErrorMessage(
             ? validation.loc
                 .filter(
                   (part) =>
-                    part !== "body" &&
-                    part !== "query" &&
-                    part !== "path"
+                    part !== 'body' && part !== 'query' && part !== 'path',
                 )
-                .join(".")
-            : "";
+                .join('.')
+            : '';
 
           const message =
-            typeof validation.msg === "string"
+            typeof validation.msg === 'string'
               ? validation.msg
-              : "Invalid value";
+              : 'Invalid value';
 
           return field ? `${field}: ${message}` : message;
         }
 
         return String(item);
       })
-      .join("; ");
+      .join('; ');
   }
 
-  if (typeof data?.message === "string" && data.message.trim()) {
+  if (typeof data?.message === 'string' && data.message.trim()) {
     return data.message;
   }
 
   if (response?.status && response.status >= 500) {
-    return "Something went wrong on the server. Please try again or check the backend logs.";
+    return 'Something went wrong on the server. Please try again or check the backend logs.';
   }
 
   if (response?.status) {
@@ -105,7 +99,7 @@ function getApiErrorMessage(
   }
 
   if (err.request) {
-    return "Could not connect to the server. Check whether the backend is running.";
+    return 'Could not connect to the server. Check whether the backend is running.';
   }
 
   return err.message || fallback;
@@ -115,29 +109,26 @@ export default function Projects() {
   const [projects, setProjects] = useState<Project[]>([]);
   const [users, setUsers] = useState<User[]>([]);
 
-  const [name, setName] = useState("");
-  const [description, setDescription] = useState("");
-  const [managerId, setManagerId] = useState("");
+  const [name, setName] = useState('');
+  const [description, setDescription] = useState('');
+  const [managerId, setManagerId] = useState('');
   const [memberIds, setMemberIds] = useState<number[]>([]);
-  const [memberSearch, setMemberSearch] = useState("");
+  const [memberSearch, setMemberSearch] = useState('');
 
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
   const [showForm, setShowForm] = useState(false);
-  const [editingProjectId, setEditingProjectId] = useState<number | null>(
-    null
-  );
-
+  const [editingProjectId, setEditingProjectId] = useState<number | null>(null);
 
   const managers = useMemo(
-    () => users.filter((user) => user.role === "project_manager"),
-    [users]
+    () => users.filter((user) => user.role === 'project_manager'),
+    [users],
   );
 
   const members = useMemo(
-    () => users.filter((user) => user.role === "project_member"),
-    [users]
+    () => users.filter((user) => user.role === 'project_member'),
+    [users],
   );
 
   const filteredMembers = useMemo(() => {
@@ -156,7 +147,7 @@ export default function Projects() {
           (project) =>
             project.member_ids?.includes(member.id) &&
             member.project_id === project.id &&
-            project.id === editingProjectId
+            project.id === editingProjectId,
         );
 
       // Also keep members selected in the current form.
@@ -171,8 +162,8 @@ export default function Projects() {
 
     try {
       const [projectsResponse, usersResponse] = await Promise.all([
-        api.get<Project[]>("/projects/"),
-        api.get<PaginatedUsersResponse>("/users/", {
+        api.get<Project[]>('/projects/'),
+        api.get<PaginatedUsersResponse>('/users/', {
           params: {
             page: 1,
             page_size: 100,
@@ -182,20 +173,16 @@ export default function Projects() {
 
       setProjects(projectsResponse.data);
       setUsers(usersResponse.data.items);
-        } catch (err: unknown) {
-      console.error("Load projects/users error:", err);
+    } catch (err: unknown) {
+      console.error('Load projects/users error:', err);
 
       toast.error(
-        getApiErrorMessage(
-          err,
-          "Could not load projects and users."
-        )
+        getApiErrorMessage(err, 'Could not load projects and users.'),
       );
     } finally {
       setLoading(false);
     }
   }
-
 
   useEffect(() => {
     void loadData();
@@ -205,35 +192,32 @@ export default function Projects() {
     setMemberIds((current) =>
       current.includes(id)
         ? current.filter((memberId) => memberId !== id)
-        : [...current, id]
+        : [...current, id],
     );
   }
 
   function resetForm() {
-    setName("");
-    setDescription("");
-    setManagerId("");
+    setName('');
+    setDescription('');
+    setManagerId('');
     setMemberIds([]);
-    setMemberSearch("");
+    setMemberSearch('');
     setEditingProjectId(null);
     setShowForm(false);
   }
 
-  async function handleCreateProject(
-    event: React.FormEvent<HTMLFormElement>
-  ) {
+  async function handleCreateProject(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
-
 
     const trimmedName = name.trim();
 
     if (!trimmedName) {
-      toast.error("Enter a project name.");
+      toast.error('Enter a project name.');
       return;
     }
 
     if (trimmedName.length > 200) {
-      toast.error("Project name cannot exceed 200 characters.");
+      toast.error('Project name cannot exceed 200 characters.');
       return;
     }
 
@@ -243,20 +227,20 @@ export default function Projects() {
       projects.some(
         (project) =>
           project.id !== editingProjectId &&
-          project.name.trim().toLowerCase() === normalizedName
+          project.name.trim().toLowerCase() === normalizedName,
       )
     ) {
-      toast.error("A project with this name already exists.");
+      toast.error('A project with this name already exists.');
       return;
     }
 
     if (memberIds.length === 0) {
-      toast.error("Select at least one project member.");
+      toast.error('Select at least one project member.');
       return;
     }
 
     if (!managerId) {
-      toast.error("Select a project manager.");
+      toast.error('Select a project manager.');
       return;
     }
 
@@ -273,7 +257,7 @@ export default function Projects() {
       if (editingProjectId !== null) {
         await api.patch(`/projects/${editingProjectId}`, payload);
       } else {
-        await api.post("/projects/", payload);
+        await api.post('/projects/', payload);
       }
 
       const wasEditing = editingProjectId !== null;
@@ -283,41 +267,40 @@ export default function Projects() {
 
       toast.success(
         wasEditing
-          ? "Project updated successfully."
-          : "Project created successfully."
+          ? 'Project updated successfully.'
+          : 'Project created successfully.',
       );
-       } catch (err: unknown) {
-      console.error("Save project error:", err);
+    } catch (err: unknown) {
+      console.error('Save project error:', err);
 
       toast.error(
         getApiErrorMessage(
           err,
           editingProjectId !== null
-            ? "Could not update the project."
-            : "Could not create the project."
-        )
+            ? 'Could not update the project.'
+            : 'Could not create the project.',
+        ),
       );
     } finally {
       setSaving(false);
     }
   }
-  
-  function handleEditProject(project: Project) {
 
+  function handleEditProject(project: Project) {
     setEditingProjectId(project.id);
     setName(project.name);
-    setDescription(project.description ?? "");
+    setDescription(project.description ?? '');
     setManagerId(String(project.manager_id));
     setMemberIds(project.member_ids ?? []);
-    setMemberSearch("");
+    setMemberSearch('');
     setShowForm(true);
 
-    window.scrollTo({ top: 0, behavior: "smooth" });
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
   async function handleDeleteProject(project: Project) {
     const confirmed = window.confirm(
-      `Are you sure you want to delete "${project.name}"?`
+      `Are you sure you want to delete "${project.name}"?`,
     );
 
     if (!confirmed) return;
@@ -326,7 +309,7 @@ export default function Projects() {
       await api.delete(`/projects/${project.id}`);
 
       setProjects((current) =>
-        current.filter((item) => item.id !== project.id)
+        current.filter((item) => item.id !== project.id),
       );
 
       if (editingProjectId === project.id) {
@@ -334,20 +317,17 @@ export default function Projects() {
       }
 
       toast.success(`"${project.name}" deleted successfully.`);
-      } catch (err: unknown) {
-      console.error("Delete project error:", err);
-        
+    } catch (err: unknown) {
+      console.error('Delete project error:', err);
+
       toast.error(
-        getApiErrorMessage(
-          err,
-          `Could not delete "${project.name}".`
-        )
+        getApiErrorMessage(err, `Could not delete "${project.name}".`),
       );
     }
   }
 
   function getUserName(id: number) {
-    return users.find((user) => user.id === id)?.name ?? "Unknown user";
+    return users.find((user) => user.id === id)?.name ?? 'Unknown user';
   }
 
   if (loading) {
@@ -373,7 +353,6 @@ export default function Projects() {
           type="button"
           className="projects-primary-button"
           onClick={() => {
-
             if (showForm) {
               resetForm();
             } else {
@@ -381,7 +360,7 @@ export default function Projects() {
             }
           }}
         >
-          {showForm ? "Cancel" : "+ Create project"}
+          {showForm ? 'Cancel' : '+ Create project'}
         </button>
       </header>
 
@@ -391,13 +370,13 @@ export default function Projects() {
             <div>
               <h2>
                 {editingProjectId !== null
-                  ? "Edit project"
-                  : "Create a project"}
+                  ? 'Edit project'
+                  : 'Create a project'}
               </h2>
               <p>
                 {editingProjectId !== null
-                  ? "Update project details and manage your team."
-                  : "Add project details and choose your team."}
+                  ? 'Update project details and manage your team.'
+                  : 'Add project details and choose your team.'}
               </p>
             </div>
           </div>
@@ -488,7 +467,7 @@ export default function Projects() {
 
               <small>
                 {memberIds.length} member
-                {memberIds.length === 1 ? "" : "s"} selected
+                {memberIds.length === 1 ? '' : 's'} selected
               </small>
             </div>
 
@@ -508,11 +487,11 @@ export default function Projects() {
               >
                 {saving
                   ? editingProjectId !== null
-                    ? "Saving..."
-                    : "Creating..."
+                    ? 'Saving...'
+                    : 'Creating...'
                   : editingProjectId !== null
-                    ? "Save changes"
-                    : "Create project"}
+                    ? 'Save changes'
+                    : 'Create project'}
               </button>
             </div>
           </form>
@@ -525,7 +504,7 @@ export default function Projects() {
             <h2>All projects</h2>
             <p>
               {projects.length} project
-              {projects.length === 1 ? "" : "s"}
+              {projects.length === 1 ? '' : 's'}
             </p>
           </div>
 
@@ -579,28 +558,26 @@ export default function Projects() {
                 </div>
 
                 <p className="project-description">
-                  {project.description || "No description added."}
+                  {project.description || 'No description added.'}
                 </p>
 
-                
-              <div className="project-info-row">
-                <div className="project-manager-row">
-                  <span className="project-avatar">
-                    {getUserName(project.manager_id).charAt(0).toUpperCase()}
-                  </span>
+                <div className="project-info-row">
+                  <div className="project-manager-row">
+                    <span className="project-avatar">
+                      {getUserName(project.manager_id).charAt(0).toUpperCase()}
+                    </span>
 
-                  <div>
-                    <small>Project manager</small>
-                    <strong>{getUserName(project.manager_id)}</strong>
+                    <div>
+                      <small>Project manager</small>
+                      <strong>{getUserName(project.manager_id)}</strong>
+                    </div>
+                  </div>
+
+                  <div className="project-open-issues">
+                    <strong>{project.open_issue_count ?? 0}</strong>
+                    <span>Open issues</span>
                   </div>
                 </div>
-
-                <div className="project-open-issues">
-                  <strong>{project.open_issue_count ?? 0}</strong>
-                  <span>Open issues</span>
-                </div>
-              </div>
-
 
                 <div className="project-card-footer">
                   <div className="project-member-list">
@@ -617,11 +594,7 @@ export default function Projects() {
                     )}
                   </div>
 
-                  <small>
-                    {project.member_ids?.length ?? 0} members
-                  </small>
-
-
+                  <small>{project.member_ids?.length ?? 0} members</small>
                 </div>
               </article>
             ))}

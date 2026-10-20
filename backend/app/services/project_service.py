@@ -1,12 +1,10 @@
-
+from backend.app.models.issue import Issue, IssueStatus
+from backend.app.models.project import Project
+from backend.app.repositories import project_repository
+from backend.app.schemas.project import ProjectCreate, ProjectUpdate
+from fastapi import HTTPException, status
 from sqlalchemy import func
 from sqlalchemy.orm import Session
-from fastapi import HTTPException, status
-
-from backend.app.models.project import Project
-from backend.app.models.issue import Issue, IssueStatus
-from backend.app.schemas.project import ProjectCreate, ProjectUpdate
-from backend.app.repositories import project_repository
 
 
 def create_project(
@@ -22,9 +20,7 @@ def create_project(
         )
 
     existing_project = (
-        db.query(Project)
-        .filter(func.lower(Project.name) == name.lower())
-        .first()
+        db.query(Project).filter(func.lower(Project.name) == name.lower()).first()
     )
 
     if existing_project:
@@ -112,14 +108,16 @@ def get_projects(db: Session) -> list[dict]:
             .count()
         )
 
-        results.append({
-            "id": project.id,
-            "name": project.name,
-            "description": project.description,
-            "manager_id": project.manager_id,
-            "member_ids": project.member_ids or [],
-            "open_issue_count": open_issue_count,
-        })
+        results.append(
+            {
+                "id": project.id,
+                "name": project.name,
+                "description": project.description,
+                "manager_id": project.manager_id,
+                "member_ids": project.member_ids or [],
+                "open_issue_count": open_issue_count,
+            }
+        )
 
     return results
 

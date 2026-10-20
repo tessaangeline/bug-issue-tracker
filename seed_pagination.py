@@ -1,4 +1,3 @@
-
 import os
 import getpass
 import requests
@@ -23,8 +22,7 @@ project_response = session.get(
     timeout=15,
 )
 project_response.raise_for_status()
-print(
-    f"Connected to project: {project_response.json().get('name', PROJECT_ID)}")
+print(f"Connected to project: {project_response.json().get('name', PROJECT_ID)}")
 
 # Fetch every issue currently in this project.
 existing_test_issues = []
@@ -40,8 +38,7 @@ while True:
     data = response.json()
 
     existing_test_issues.extend(
-        issue for issue in data["items"]
-        if issue["title"].startswith(PREFIX)
+        issue for issue in data["items"] if issue["title"].startswith(PREFIX)
     )
 
     if page >= data["total_pages"]:

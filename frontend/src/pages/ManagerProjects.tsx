@@ -1,9 +1,8 @@
-
-import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
-import api from "../api/axios";
-import "./ManagerProjects.css";
-import { toast } from "sonner";
+import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import api from '../api/axios';
+import './ManagerProjects.css';
+import { toast } from 'sonner';
 
 type Project = {
   id: number;
@@ -20,11 +19,11 @@ export default function ManagerProjects() {
 
   useEffect(() => {
     api
-      .get<Project[]>("/projects/")
+      .get<Project[]>('/projects/')
       .then((response) => setProjects(response.data))
       .catch((err) => {
         toast.error(
-          err.response?.data?.detail ?? "Could not load your projects."
+          err.response?.data?.detail ?? 'Could not load your projects.',
         );
       })
       .finally(() => setLoading(false));
@@ -42,10 +41,7 @@ export default function ManagerProjects() {
       </header>
 
       <section className="dashboard-content">
-        <button
-          className="manager-back-button"
-          onClick={() => navigate("/")}
-        >
+        <button className="manager-back-button" onClick={() => navigate('/')}>
           ← Back to dashboard
         </button>
 
@@ -53,9 +49,7 @@ export default function ManagerProjects() {
           <div className="welcome-text">
             <span className="eyebrow">YOUR WORKSPACE</span>
             <h1>My Projects</h1>
-            <p>
-              Select a project to manage its team and track its issues.
-            </p>
+            <p>Select a project to manage its team and track its issues.</p>
           </div>
           <div className="welcome-avatar">▦</div>
         </div>
@@ -66,15 +60,16 @@ export default function ManagerProjects() {
             Projects assigned to you as the manager.
           </p>
 
-          {loading && <p className="manager-projects-message">Loading projects...</p>}
-
+          {loading && (
+            <p className="manager-projects-message">Loading projects...</p>
+          )}
 
           {!loading && projects.length === 0 && (
             <div className="manager-projects-empty">
               <h3>No projects assigned yet</h3>
               <p>
-                When an administrator assigns a project to you, it will
-                appear here.
+                When an administrator assigns a project to you, it will appear
+                here.
               </p>
             </div>
           )}
@@ -88,20 +83,16 @@ export default function ManagerProjects() {
                   <h3>{project.name}</h3>
 
                   <p className="manager-project-description">
-                    {project.description || "No description provided."}
+                    {project.description || 'No description provided.'}
                   </p>
 
                   <div className="manager-project-meta">
-                    <span>
-                      {project.member_ids?.length ?? 0} members
-                    </span>
+                    <span>{project.member_ids?.length ?? 0} members</span>
                   </div>
 
                   <button
                     className="manager-project-open"
-                    onClick={() =>
-                      navigate(`/manager/projects/${project.id}`)
-                    }
+                    onClick={() => navigate(`/manager/projects/${project.id}`)}
                   >
                     Open project →
                   </button>

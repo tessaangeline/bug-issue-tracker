@@ -1,6 +1,6 @@
+from backend.app.models.issue import Issue
 from sqlalchemy import func, or_
 from sqlalchemy.orm import Session
-from backend.app.models.issue import Issue
 
 
 def create_issue(db: Session, issue: Issue) -> Issue:
@@ -19,9 +19,7 @@ def get_project_issues(
     page: int = 1,
     page_size: int = 10,
 ) -> tuple[list[Issue], int]:
-    query = db.query(Issue).filter(
-        Issue.project_id == project_id
-    )
+    query = db.query(Issue).filter(Issue.project_id == project_id)
 
     # Search issue titles and descriptions in the database.
     if search and search.strip():
@@ -55,12 +53,10 @@ def get_project_issues(
 
 
 def get_issue(
-        db: Session,
-        issue_id: int,
+    db: Session,
+    issue_id: int,
 ) -> Issue | None:
-    return db.query(Issue).filter(
-        Issue.id == issue_id
-    ).first()
+    return db.query(Issue).filter(Issue.id == issue_id).first()
 
 
 def update_issue(db: Session, issue: Issue) -> Issue:
@@ -79,9 +75,7 @@ def get_issues_assigned_to_user(
     page: int = 1,
     page_size: int = 10,
 ) -> tuple[list[Issue], int]:
-    query = db.query(Issue).filter(
-        Issue.assignee_id == user_id
-    )
+    query = db.query(Issue).filter(Issue.assignee_id == user_id)
 
     # Search titles and descriptions in the database.
     if search and search.strip():

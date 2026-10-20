@@ -1,26 +1,24 @@
-
-from fastapi import APIRouter, Depends, Query, HTTPException
-from sqlalchemy.orm import Session
-
 from backend.app.db.database import get_db
+from backend.app.models.user import User, UserRole
+from backend.app.repositories import project_repository
 from backend.app.schemas.issue import (
     IssueCreate,
     IssueResponse,
-    IssueUpdate,
     IssueStatusUpdate,
+    IssueUpdate,
 )
+from backend.app.security import get_current_user, require_role
 from backend.app.services.issue_service import (
     create_issue,
-    get_project_issues,
+    delete_issue,
     get_issue,
+    get_my_issues,
+    get_project_issues,
     update_issue,
     update_issue_status,
-    get_my_issues,
-    delete_issue,
 )
-from backend.app.models.user import User, UserRole
-from backend.app.security import require_role, get_current_user
-from backend.app.repositories import project_repository
+from fastapi import APIRouter, Depends, HTTPException, Query
+from sqlalchemy.orm import Session
 
 router = APIRouter(prefix="/projects", tags=["issues"])
 issue_router = APIRouter(prefix="/issues", tags=["issues"])
@@ -97,9 +95,7 @@ def get_assigned_issues(
     page: int = Query(default=1, ge=1),
     page_size: int = Query(default=10, ge=1, le=100),
     db: Session = Depends(get_db),
-    current_user: User = Depends(
-        require_role([UserRole.PROJECT_MEMBER])
-    ),
+    current_user: User = Depends(require_role([UserRole.PROJECT_MEMBER])),
 ):
     return get_my_issues(
         db=db,

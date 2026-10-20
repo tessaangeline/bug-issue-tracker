@@ -1,19 +1,21 @@
-from fastapi import APIRouter, Depends, HTTPException
-from sqlalchemy.orm import Session
-
 from backend.app.db.database import get_db
+from backend.app.models.issue import Issue, IssueStatus
 from backend.app.models.user import User, UserRole
+from backend.app.repositories import project_repository
 from backend.app.schemas.project import (
     ProjectCreate,
+    ProjectMembersUpdate,
     ProjectResponse,
     ProjectUpdate,
-    ProjectMembersUpdate,
 )
-from backend.app.services.project_service import create_project, get_projects, update_project, delete_project
-from backend.app.repositories import project_repository
-from backend.app.security import require_role, get_current_user
-from backend.app.models.issue import Issue, IssueStatus
-from backend.app.models.project import Project
+from backend.app.security import get_current_user, require_role
+from backend.app.services.project_service import (
+    create_project,
+    delete_project,
+    update_project,
+)
+from fastapi import APIRouter, Depends, HTTPException
+from sqlalchemy.orm import Session
 
 router = APIRouter(prefix="/projects", tags=["projects"])
 
@@ -22,8 +24,7 @@ router = APIRouter(prefix="/projects", tags=["projects"])
 def create_new_project(
     project_data: ProjectCreate,
     db: Session = Depends(get_db),
-    current_user: User = Depends(
-        require_role([UserRole.SUPER_ADMIN])),
+    current_user: User = Depends(require_role([UserRole.SUPER_ADMIN])),
 ):
     return create_project(
         db,
@@ -70,14 +71,16 @@ def get_visible_projects(
             .count()
         )
 
-        results.append({
-            "id": project.id,
-            "name": project.name,
-            "description": project.description,
-            "manager_id": project.manager_id,
-            "member_ids": project.member_ids or [],
-            "open_issue_count": open_issue_count,
-        })
+        results.append(
+            {
+                "id": project.id,
+                "name": project.name,
+                "description": project.description,
+                "manager_id": project.manager_id,
+                "member_ids": project.member_ids or [],
+                "open_issue_count": open_issue_count,
+            }
+        )
 
     return results
 
@@ -87,9 +90,7 @@ def update_existing_project(
     project_id: int,
     project_data: ProjectUpdate,
     db: Session = Depends(get_db),
-    current_user: User = Depends(
-        require_role([UserRole.SUPER_ADMIN])
-    ),
+    current_user: User = Depends(require_role([UserRole.SUPER_ADMIN])),
 ):
     return update_project(db, project_id, project_data)
 
@@ -98,9 +99,7 @@ def update_existing_project(
 def delete_existing_project(
     project_id: int,
     db: Session = Depends(get_db),
-    current_user: User = Depends(
-        require_role([UserRole.SUPER_ADMIN])
-    ),
+    current_user: User = Depends(require_role([UserRole.SUPER_ADMIN])),
 ):
     delete_project(db, project_id)
     return {"message": "Project deleted successfully"}
@@ -185,9 +184,7 @@ def get_available_project_members(
         db.query(User)
         .filter(
             User.role == UserRole.PROJECT_MEMBER,
-            ~User.id.in_(existing_member_ids)
-            if existing_member_ids
-            else True,
+            ~User.id.in_(existing_member_ids) if existing_member_ids else True,
         )
         .order_by(User.name.asc())
         .all()
@@ -317,11 +314,7 @@ def get_project_details(
             detail="You do not have permission to view this project",
         )
 
-    manager = (
-        db.query(User)
-        .filter(User.id == project.manager_id)
-        .first()
-    )
+    manager = db.query(User).filter(User.id == project.manager_id).first()
 
     member_ids = project.member_ids or []
 

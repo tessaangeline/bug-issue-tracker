@@ -1,13 +1,12 @@
 from datetime import datetime, timezone
-from sqlalchemy.orm import Session
-from fastapi import HTTPException
-from datetime import datetime, timezone
 
 from backend.app.models.issue import Issue, IssueStatus
-from backend.app.schemas.issue import IssueCreate, IssueUpdate
-from backend.app.repositories import issue_repository
 from backend.app.models.project import Project
 from backend.app.models.user import User, UserRole
+from backend.app.repositories import issue_repository
+from backend.app.schemas.issue import IssueCreate, IssueUpdate
+from fastapi import HTTPException
+from sqlalchemy.orm import Session
 
 
 def create_issue(
@@ -16,9 +15,7 @@ def create_issue(
     project_id: int,
     current_user: User,
 ) -> Issue:
-    project = db.query(Project).filter(
-        Project.id == project_id
-    ).first()
+    project = db.query(Project).filter(Project.id == project_id).first()
 
     if project is None:
         raise HTTPException(status_code=404, detail="Project not found")
@@ -40,10 +37,14 @@ def create_issue(
     assignee_id = issue_data.assignee_id
 
     if assignee_id is not None:
-        assignee = db.query(User).filter(
-            User.id == assignee_id,
-            User.role == UserRole.PROJECT_MEMBER,
-        ).first()
+        assignee = (
+            db.query(User)
+            .filter(
+                User.id == assignee_id,
+                User.role == UserRole.PROJECT_MEMBER,
+            )
+            .first()
+        )
 
         if assignee is None or assignee_id not in (project.member_ids or []):
             raise HTTPException(
@@ -93,8 +94,8 @@ def get_project_issues(
 
 
 def get_issue(
-        db: Session,
-        issue_id: int,
+    db: Session,
+    issue_id: int,
 ) -> Issue | None:
     return issue_repository.get_issue(
         db,
@@ -113,9 +114,7 @@ def update_issue(
     if issue is None:
         raise HTTPException(status_code=404, detail="Issue not found")
 
-    project = db.query(Project).filter(
-        Project.id == issue.project_id
-    ).first()
+    project = db.query(Project).filter(Project.id == issue.project_id).first()
 
     if project is None:
         raise HTTPException(status_code=404, detail="Project not found")
@@ -149,15 +148,16 @@ def update_issue(
     if "assignee_id" in update_data:
         assignee_id = update_data["assignee_id"]
         if assignee_id is not None:
-            assignee = db.query(User).filter(
-                User.id == assignee_id,
-                User.role == UserRole.PROJECT_MEMBER,
-            ).first()
+            assignee = (
+                db.query(User)
+                .filter(
+                    User.id == assignee_id,
+                    User.role == UserRole.PROJECT_MEMBER,
+                )
+                .first()
+            )
 
-            if (
-                assignee is None
-                or assignee_id not in (project.member_ids or [])
-            ):
+            if assignee is None or assignee_id not in (project.member_ids or []):
                 raise HTTPException(
                     status_code=400,
                     detail="Assignee must be a member of this project",
@@ -180,9 +180,7 @@ def update_issue_status(
     if issue is None:
         raise HTTPException(status_code=404, detail="Issue not found")
 
-    project = db.query(Project).filter(
-        Project.id == issue.project_id
-    ).first()
+    project = db.query(Project).filter(Project.id == issue.project_id).first()
 
     if project is None:
         raise HTTPException(status_code=404, detail="Project not found")
@@ -203,7 +201,7 @@ def update_issue_status(
             detail="You do not have permission to update this issue status",
         )
 
-# Allow any valid status change; there are no transition restrictions.
+    # Allow any valid status change; there are no transition restrictions.
 
     if new_status == IssueStatus.CLOSED:
         completed_at = datetime.now(timezone.utc)
@@ -217,9 +215,7 @@ def update_issue_status(
             if created_at.tzinfo is None:
                 created_at = created_at.replace(tzinfo=timezone.utc)
 
-            actual_days = (
-                completed_at - created_at
-            ).total_seconds() / 86400
+            actual_days = (completed_at - created_at).total_seconds() / 86400
 
             issue.actual_duration_days = round(max(0, actual_days), 2)
     else:
@@ -270,9 +266,7 @@ def delete_issue(
     if issue is None:
         raise HTTPException(status_code=404, detail="Issue not found")
 
-    project = db.query(Project).filter(
-        Project.id == issue.project_id
-    ).first()
+    project = db.query(Project).filter(Project.id == issue.project_id).first()
 
     if project is None:
         raise HTTPException(status_code=404, detail="Project not found")

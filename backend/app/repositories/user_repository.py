@@ -1,7 +1,6 @@
-from sqlalchemy.orm import Session
-from sqlalchemy import func
-
 from backend.app.models.user import User
+from sqlalchemy import func
+from sqlalchemy.orm import Session
 
 
 def create_user(db: Session, user: User) -> User:
@@ -34,8 +33,7 @@ def get_all_users(
     if search.strip():
         search_term = f"%{search.strip()}%"
         query = query.filter(
-            (User.name.ilike(search_term))
-            | (User.email.ilike(search_term))
+            (User.name.ilike(search_term)) | (User.email.ilike(search_term))
         )
 
     if role and role != "all":
@@ -48,12 +46,7 @@ def get_all_users(
 
     total = query.count()
 
-    users = (
-        query
-        .offset((page - 1) * page_size)
-        .limit(page_size)
-        .all()
-    )
+    users = query.offset((page - 1) * page_size).limit(page_size).all()
 
     return users, total
 
@@ -70,12 +63,7 @@ def delete_user(db: Session, user: User) -> User:
 
 
 def get_by_id_for_update(db: Session, user_id: int) -> User | None:
-    return (
-        db.query(User)
-        .filter(User.id == user_id)
-        .with_for_update()
-        .first()
-    )
+    return db.query(User).filter(User.id == user_id).with_for_update().first()
 
 
 def get_by_email_excluding_user(
@@ -83,8 +71,4 @@ def get_by_email_excluding_user(
     email: str,
     user_id: int,
 ) -> User | None:
-    return (
-        db.query(User)
-        .filter(User.email == email, User.id != user_id)
-        .first()
-    )
+    return db.query(User).filter(User.email == email, User.id != user_id).first()

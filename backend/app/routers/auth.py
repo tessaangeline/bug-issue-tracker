@@ -1,12 +1,10 @@
+from backend.app.db.database import get_db
+from backend.app.models.user import User
+from backend.app.security import get_current_user, refresh_access_token
+from backend.app.services.user_service import login_user
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
-
-from backend.app.db.database import get_db
-from backend.app.services.user_service import login_user
-from backend.app.security import refresh_access_token
-from backend.app.models.user import User
-from backend.app.security import get_current_user
 
 # OAuth2PasswordRequestForm expects login credentials to be sent as form data, not JSON.
 
@@ -19,21 +17,15 @@ def login(
     form_data: OAuth2PasswordRequestForm = Depends(),
     db: Session = Depends(get_db),
 ):
-    tokens = login_user(
-        db,
-        form_data.username,
-        form_data.password
-    )
+    tokens = login_user(db, form_data.username, form_data.password)
 
     if not tokens:
-        raise HTTPException(
-            status_code=401, detail="Invalid email or password"
-        )
+        raise HTTPException(status_code=401, detail="Invalid email or password")
 
     return {
         "access_token": tokens["access_token"],
         "refresh_token": tokens["refresh_token"],
-        "token_type": "bearer"
+        "token_type": "bearer",
     }
 
 
@@ -46,10 +38,7 @@ def refresh(
         refresh_token,
         db,
     )
-    return {
-        "access_token": access_token,
-        "token_type": "bearer"
-    }
+    return {"access_token": access_token, "token_type": "bearer"}
 
 
 @router.post("/logout")

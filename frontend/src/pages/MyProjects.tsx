@@ -1,7 +1,6 @@
-
-import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
-import api from "../api/axios";
+import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import api from '../api/axios';
 
 type Project = {
   id: number;
@@ -12,17 +11,15 @@ type Project = {
 export default function MyProjects() {
   const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
+  const [error, setError] = useState('');
   const navigate = useNavigate();
 
   useEffect(() => {
     api
-      .get<Project[]>("/projects/")
+      .get<Project[]>('/projects/')
       .then((response) => setProjects(response.data))
       .catch((err) => {
-        setError(
-          err.response?.data?.detail ?? "Could not load your projects."
-        );
+        setError(err.response?.data?.detail ?? 'Could not load your projects.');
       })
       .finally(() => setLoading(false));
   }, []);
@@ -30,11 +27,7 @@ export default function MyProjects() {
   return (
     <main className="dashboard-page">
       <section className="dashboard-content">
-
-        <button
-          className="back-button"
-          onClick={() => navigate("/")}
-        >
+        <button className="back-button" onClick={() => navigate('/')}>
           ← Back to Dashboard
         </button>
         <h1>My Projects</h1>
@@ -57,13 +50,12 @@ export default function MyProjects() {
               <span className="action-icon">▦</span>
               <span className="action-title">{project.name}</span>
               <span className="action-description">
-                {project.description || "No description available."}
+                {project.description || 'No description available.'}
               </span>
               <span className="action-link">Open project →</span>
             </button>
           ))}
         </div>
-
       </section>
     </main>
   );

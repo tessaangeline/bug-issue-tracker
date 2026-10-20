@@ -1,9 +1,8 @@
-
-import { useEffect, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
-import api from "../api/axios";
-import "./MyIssues.css";
-import { toast } from "sonner";
+import { useEffect, useState } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
+import api from '../api/axios';
+import './MyIssues.css';
+import { toast } from 'sonner';
 
 type ProjectUser = {
   id: number;
@@ -19,8 +18,8 @@ type ProjectDetails = {
   members: ProjectUser[];
 };
 
-type Status = "open" | "in_progress" | "in_review" | "closed";
-type Severity = "low" | "medium" | "high" | "critical";
+type Status = 'open' | 'in_progress' | 'in_review' | 'closed';
+type Severity = 'low' | 'medium' | 'high' | 'critical';
 
 type Issue = {
   id: number;
@@ -45,27 +44,20 @@ type PaginatedIssuesResponse = {
   total_pages: number;
 };
 
-const STATUSES: Status[] = [
-  "open",
-  "in_progress",
-  "in_review",
-  "closed",
-];
+const STATUSES: Status[] = ['open', 'in_progress', 'in_review', 'closed'];
 
-const SEVERITIES: Severity[] = ["low", "medium", "high", "critical"];
+const SEVERITIES: Severity[] = ['low', 'medium', 'high', 'critical'];
 const ISSUES_PER_PAGE = 10;
 
 const formatLabel = (value: string) =>
-  value.replaceAll("_", " ").replace(/\b\w/g, (char) =>
-    char.toUpperCase()
-  );
+  value.replaceAll('_', ' ').replace(/\b\w/g, (char) => char.toUpperCase());
 
 const formatDate = (value: string | null | undefined) => {
-  if (!value) return "—";
+  if (!value) return '—';
 
   const date = new Date(value);
 
-  if (Number.isNaN(date.getTime())) return "—";
+  if (Number.isNaN(date.getTime())) return '—';
 
   return date.toLocaleDateString();
 };
@@ -80,7 +72,7 @@ export default function MyProjectWorkspace() {
   const [project, setProject] = useState<ProjectDetails | null>(null);
   const [issues, setIssues] = useState<Issue[]>([]);
   const [availableMembers, setAvailableMembers] = useState<ProjectUser[]>([]);
-  const [selectedMemberId, setSelectedMemberId] = useState("");
+  const [selectedMemberId, setSelectedMemberId] = useState('');
   const [updatingMembers, setUpdatingMembers] = useState(false);
   const [canManageMembers, setCanManageMembers] = useState(false);
   const [totalIssues, setTotalIssues] = useState(0);
@@ -90,135 +82,129 @@ export default function MyProjectWorkspace() {
   const [loading, setLoading] = useState(true);
   const [updatingId, setUpdatingId] = useState<number | null>(null);
 
-  const [search, setSearch] = useState("");
-  const [statusFilter, setStatusFilter] = useState("all");
-  const [severityFilter, setSeverityFilter] = useState("all");
+  const [search, setSearch] = useState('');
+  const [statusFilter, setStatusFilter] = useState('all');
+  const [severityFilter, setSeverityFilter] = useState('all');
   const [currentPage, setCurrentPage] = useState(1);
 
   // Reset pagination when search or filters change.
 
-useEffect(() => {
-  if (!validId) {
-    toast.error("Invalid project ID.");
-    setLoading(false);
-    return;
-  }
+  useEffect(() => {
+    if (!validId) {
+      toast.error('Invalid project ID.');
+      setLoading(false);
+      return;
+    }
 
-  let cancelled = false;
+    let cancelled = false;
 
-  const loadProject = async () => {
+    const loadProject = async () => {
+      try {
+        const response = await api.get<ProjectDetails>(
+          `/projects/${id}/details`,
+        );
+
+        if (cancelled) return;
+
+        setProject(response.data);
+
+        try {
+          const membersResponse = await api.get<ProjectUser[]>(
+            `/projects/${id}/available-members`,
+          );
+
+          if (!cancelled) {
+            setAvailableMembers(membersResponse.data);
+            setCanManageMembers(true);
+          }
+        } catch (error) {
+          console.error('Could not load available members:', error);
+
+          if (!cancelled) {
+            setAvailableMembers([]);
+            setCanManageMembers(false);
+          }
+        }
+      } catch (error: any) {
+        if (!cancelled) {
+          toast.error(
+            error.response?.data?.detail ??
+              'Could not load this project. Please try again.',
+          );
+        }
+      }
+    };
+
+    void loadProject();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [id, validId]);
+
+  const updateProjectMembers = async (memberIds: number[]) => {
+    if (!project) return;
+
+    setUpdatingMembers(true);
+
     try {
-      const response = await api.get<ProjectDetails>(
-        `/projects/${id}/details`
-      );
+      await api.put(`/projects/${id}/members`, {
+        member_ids: memberIds,
+      });
 
-      if (cancelled) return;
+      const response = await api.get<ProjectDetails>(`/projects/${id}/details`);
 
       setProject(response.data);
+      setSelectedMemberId('');
+      const membersResponse = await api.get<ProjectUser[]>(
+        `/projects/${id}/available-members`,
+      );
+      setAvailableMembers(membersResponse.data);
 
-      try {
-        const membersResponse = await api.get<ProjectUser[]>(
-          `/projects/${id}/available-members`
-        );
-
-        if (!cancelled) {
-          setAvailableMembers(membersResponse.data);
-          setCanManageMembers(true);
-        }
-      } catch (error) {
-        console.error("Could not load available members:", error);
-
-        if (!cancelled) {
-          setAvailableMembers([]);
-          setCanManageMembers(false);
-        }
-      }
+      toast.success('Project members updated!');
     } catch (error: any) {
-      if (!cancelled) {
-        toast.error(
-          error.response?.data?.detail ??
-            "Could not load this project. Please try again."
-        );
-      }
+      toast.error(
+        error.response?.data?.detail ?? "Couldn't update project members.",
+      );
+    } finally {
+      setUpdatingMembers(false);
     }
   };
 
-  void loadProject();
+  const handleAddMember = async () => {
+    if (!project || !selectedMemberId) {
+      toast.error('Please select a member first.');
+      return;
+    }
 
-  return () => {
-    cancelled = true;
+    const memberId = Number(selectedMemberId);
+
+    if (project.members.some((member) => member.id === memberId)) {
+      toast.error('This member is already in the project.');
+      return;
+    }
+
+    await updateProjectMembers([
+      ...project.members.map((member) => member.id),
+      memberId,
+    ]);
   };
-}, [id, validId]);
 
+  const handleRemoveMember = async (memberId: number) => {
+    if (!project) return;
 
-
-const updateProjectMembers = async (memberIds: number[]) => {
-  if (!project) return;
-
-  setUpdatingMembers(true);
-
-  try {
-    await api.put(`/projects/${id}/members`, {
-      member_ids: memberIds,
-    });
-
-    const response = await api.get<ProjectDetails>(
-      `/projects/${id}/details`
+    const confirmed = window.confirm(
+      'Are you sure you want to remove this member from the project?',
     );
 
-    setProject(response.data);
-    setSelectedMemberId("");
-   const membersResponse = await api.get<ProjectUser[]>(
-  `/projects/${id}/available-members`
-);
-setAvailableMembers(membersResponse.data);
+    if (!confirmed) return;
 
-    toast.success("Project members updated!");
-  } catch (error: any) {
-    toast.error(
-      error.response?.data?.detail ??
-        "Couldn't update project members."
+    await updateProjectMembers(
+      project.members
+        .filter((member) => member.id !== memberId)
+        .map((member) => member.id),
     );
-  } finally {
-    setUpdatingMembers(false);
-  }
-};
-
-const handleAddMember = async () => {
-  if (!project || !selectedMemberId) {
-    toast.error("Please select a member first.");
-    return;
-  }
-
-  const memberId = Number(selectedMemberId);
-
-  if (project.members.some((member) => member.id === memberId)) {
-    toast.error("This member is already in the project.");
-    return;
-  }
-
-  await updateProjectMembers([
-    ...project.members.map((member) => member.id),
-    memberId,
-  ]);
-};
-
-const handleRemoveMember = async (memberId: number) => {
-  if (!project) return;
-
-  const confirmed = window.confirm(
-    "Are you sure you want to remove this member from the project?"
-  );
-
-  if (!confirmed) return;
-
-  await updateProjectMembers(
-    project.members
-      .filter((member) => member.id !== memberId)
-      .map((member) => member.id)
-  );
-};
-
+  };
 
   // Search, filters, and pagination are handled by the backend.
   useEffect(() => {
@@ -229,22 +215,19 @@ const handleRemoveMember = async (memberId: number) => {
     async function loadIssues() {
       setLoading(true);
 
-
       try {
         const response = await api.get<PaginatedIssuesResponse>(
-          "/issues/my-issues",
+          '/issues/my-issues',
           {
             params: {
               project_id: id,
               search: search.trim() || undefined,
-              status:
-                statusFilter === "all" ? undefined : statusFilter,
-              severity:
-                severityFilter === "all" ? undefined : severityFilter,
+              status: statusFilter === 'all' ? undefined : statusFilter,
+              severity: severityFilter === 'all' ? undefined : severityFilter,
               page: currentPage,
               page_size: ISSUES_PER_PAGE,
             },
-          }
+          },
         );
 
         if (cancelled) return;
@@ -253,13 +236,13 @@ const handleRemoveMember = async (memberId: number) => {
         setTotalIssues(response.data.total);
         setTotalPages(response.data.total_pages);
       } catch (err: any) {
-          if (cancelled) return;
+        if (cancelled) return;
 
-          toast.error(
-            err.response?.data?.detail ??
-              "Could not load issues. Please try again."
-          );
-        } finally {
+        toast.error(
+          err.response?.data?.detail ??
+            'Could not load issues. Please try again.',
+        );
+      } finally {
         if (!cancelled) setLoading(false);
       }
     }
@@ -269,14 +252,7 @@ const handleRemoveMember = async (memberId: number) => {
     return () => {
       cancelled = true;
     };
-  }, [
-    id,
-    validId,
-    search,
-    statusFilter,
-    severityFilter,
-    currentPage,
-  ]);
+  }, [id, validId, search, statusFilter, severityFilter, currentPage]);
 
   async function handleStatusChange(issue: Issue, status: Status) {
     if (issue.status === status) return;
@@ -287,19 +263,17 @@ const handleRemoveMember = async (memberId: number) => {
 
       // Reload from the backend so results and counts stay accurate.
       const response = await api.get<PaginatedIssuesResponse>(
-        "/issues/my-issues",
+        '/issues/my-issues',
         {
           params: {
             project_id: id,
             search: search.trim() || undefined,
-            status:
-              statusFilter === "all" ? undefined : statusFilter,
-            severity:
-              severityFilter === "all" ? undefined : severityFilter,
+            status: statusFilter === 'all' ? undefined : statusFilter,
+            severity: severityFilter === 'all' ? undefined : severityFilter,
             page: currentPage,
             page_size: ISSUES_PER_PAGE,
           },
-        }
+        },
       );
 
       setIssues(response.data.items);
@@ -310,7 +284,7 @@ const handleRemoveMember = async (memberId: number) => {
       // the backend removes it from the current results.
     } catch (err: any) {
       toast.error(
-        err.response?.data?.detail ?? "Could not update issue status."
+        err.response?.data?.detail ?? 'Could not update issue status.',
       );
     } finally {
       setUpdatingId(null);
@@ -332,17 +306,14 @@ const handleRemoveMember = async (memberId: number) => {
   const startItem =
     totalIssues === 0 ? 0 : (currentPage - 1) * ISSUES_PER_PAGE + 1;
 
-  const endItem = Math.min(
-    currentPage * ISSUES_PER_PAGE,
-    totalIssues
-  );
+  const endItem = Math.min(currentPage * ISSUES_PER_PAGE, totalIssues);
 
   return (
     <main className="dashboard-page">
       <section className="dashboard-content">
         <button
           className="back-button"
-          onClick={() => navigate("/my-projects")}
+          onClick={() => navigate('/my-projects')}
         >
           ← Back to My Projects
         </button>
@@ -351,9 +322,7 @@ const handleRemoveMember = async (memberId: number) => {
           <div className="welcome-text">
             <span className="eyebrow">MY PROJECT WORKSPACE</span>
             <h1>{project.name}</h1>
-            <p>
-              {project.description || "No project description provided."}
-            </p>
+            <p>{project.description || 'No project description provided.'}</p>
           </div>
 
           <div className="welcome-avatar">▦</div>
@@ -376,82 +345,75 @@ const handleRemoveMember = async (memberId: number) => {
               )}
             </div>
 
-            
-<div className="project-info-block">
-  <strong>Team Members ({project.members.length})</strong>
-   <p>
-  Debug: canManageMembers = {String(canManageMembers)}
-</p>           
-  {project.members.length === 0 ? (
-    <p>No members listed.</p>
-  ) : (
-    <ul>
-      {project.members.map((member) => (
-        <li key={member.id}>
-          {member.name} — {member.email}
+            <div className="project-info-block">
+              <strong>Team Members ({project.members.length})</strong>
+              <p>Debug: canManageMembers = {String(canManageMembers)}</p>
+              {project.members.length === 0 ? (
+                <p>No members listed.</p>
+              ) : (
+                <ul>
+                  {project.members.map((member) => (
+                    <li key={member.id}>
+                      {member.name} — {member.email}
+                      {canManageMembers && (
+                        <button
+                          type="button"
+                          disabled={updatingMembers}
+                          onClick={() => handleRemoveMember(member.id)}
+                          style={{ marginLeft: '12px' }}
+                        >
+                          Remove
+                        </button>
+                      )}
+                    </li>
+                  ))}
+                </ul>
+              )}
 
-          {canManageMembers && (
-            <button
-              type="button"
-              disabled={updatingMembers}
-              onClick={() => handleRemoveMember(member.id)}
-              style={{ marginLeft: "12px" }}
-            >
-              Remove
-            </button>
-          )}
-        </li>
-      ))}
-    </ul>
-  )}
+              {canManageMembers && (
+                <div style={{ marginTop: '16px' }}>
+                  <label htmlFor="add-project-member">Add a team member</label>
 
-  {canManageMembers && (
-    <div style={{ marginTop: "16px" }}>
-      <label htmlFor="add-project-member">
-        Add a team member
-      </label>
+                  <div
+                    style={{
+                      display: 'flex',
+                      gap: '8px',
+                      marginTop: '8px',
+                      flexWrap: 'wrap',
+                    }}
+                  >
+                    <select
+                      id="add-project-member"
+                      value={selectedMemberId}
+                      onChange={(event) =>
+                        setSelectedMemberId(event.target.value)
+                      }
+                      disabled={updatingMembers}
+                    >
+                      <option value="">Select a member</option>
 
-      <div
-        style={{
-          display: "flex",
-          gap: "8px",
-          marginTop: "8px",
-          flexWrap: "wrap",
-        }}
-      >
-        <select
-          id="add-project-member"
-          value={selectedMemberId}
-          onChange={(event) =>
-            setSelectedMemberId(event.target.value)
-          }
-          disabled={updatingMembers}
-        >
-          <option value="">Select a member</option>
+                      {availableMembers.map((member) => (
+                        <option key={member.id} value={member.id}>
+                          {member.name} — {member.email}
+                        </option>
+                      ))}
+                    </select>
 
-          {availableMembers.map((member) => (
-            <option key={member.id} value={member.id}>
-              {member.name} — {member.email}
-            </option>
-          ))}
-        </select>
+                    <button
+                      type="button"
+                      onClick={handleAddMember}
+                      disabled={updatingMembers || !selectedMemberId}
+                    >
+                      {updatingMembers ? 'Saving...' : 'Add Member'}
+                    </button>
+                  </div>
 
-        <button
-          type="button"
-          onClick={handleAddMember}
-          disabled={updatingMembers || !selectedMemberId}
-        >
-          {updatingMembers ? "Saving..." : "Add Member"}
-        </button>
-      </div>
-
-      {availableMembers.length === 0 && (
-        <p>No additional members are available to add.</p>
-      )}
-    </div>
-  )}
-</div>
-
+                  {availableMembers.length === 0 && (
+                    <p>No additional members are available to add.</p>
+                  )}
+                </div>
+              )}
+            </div>
           </div>
         </section>
 
@@ -461,9 +423,6 @@ const handleRemoveMember = async (memberId: number) => {
           <p className="section-description">
             Issues assigned to you in {project.name}.
           </p>
-
-
-
 
           <div className="issue-filters">
             <input
@@ -503,7 +462,7 @@ const handleRemoveMember = async (memberId: number) => {
 
           <p>
             {totalIssues} matching issue(s)
-            {loading ? " · Updating..." : ""}
+            {loading ? ' · Updating...' : ''}
           </p>
 
           {loading ? (
@@ -542,7 +501,7 @@ const handleRemoveMember = async (memberId: number) => {
                             onChange={(event) =>
                               handleStatusChange(
                                 issue,
-                                event.target.value as Status
+                                event.target.value as Status,
                               )
                             }
                           >
@@ -553,9 +512,7 @@ const handleRemoveMember = async (memberId: number) => {
                             ))}
                           </select>
 
-                          {updatingId === issue.id && (
-                            <small> Saving...</small>
-                          )}
+                          {updatingId === issue.id && <small> Saving...</small>}
                         </td>
 
                         <td>{formatLabel(issue.severity)}</td>
@@ -564,16 +521,16 @@ const handleRemoveMember = async (memberId: number) => {
                         <td>
                           {issue.estimated_duration_days != null
                             ? `${issue.estimated_duration_days} day(s)`
-                            : "Not set"}
+                            : 'Not set'}
                         </td>
 
                         <td>{formatDate(issue.due_date)}</td>
 
                         <td>
-                          {issue.status === "closed" &&
+                          {issue.status === 'closed' &&
                           issue.actual_duration_days != null
                             ? `${issue.actual_duration_days} day(s)`
-                            : "Pending"}
+                            : 'Pending'}
                         </td>
                       </tr>
                     ))}
@@ -605,9 +562,7 @@ const handleRemoveMember = async (memberId: number) => {
                     type="button"
                     disabled={currentPage >= totalPages || loading}
                     onClick={() =>
-                      setCurrentPage((page) =>
-                        Math.min(totalPages, page + 1)
-                      )
+                      setCurrentPage((page) => Math.min(totalPages, page + 1))
                     }
                   >
                     Next

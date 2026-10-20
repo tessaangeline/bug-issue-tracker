@@ -1,0 +1,17 @@
+repos:
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.14.0
+    hooks:
+      - id: ruff-check
+        args: [--fix]
+        files: ^backend/.*\.py$
+      - id: ruff-format
+        files: ^backend/.*\.py$
+
+  - repo: local
+    hooks:
+      - id: prettier
+        name: Prettier
+        entry: frontend/node_modules/.bin/prettier --write
+        language: system
+        files: '\.(js|jsx|ts|tsx|json|css|md|html|yaml|yml)$'
