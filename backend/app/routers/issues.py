@@ -45,6 +45,7 @@ def get_issues(
     search: str | None = None,
     status: str | None = None,
     severity: str | None = None,
+    assignee_id: int | None = Query(default=None, ge=1),
     page: int = Query(default=1, ge=1),
     page_size: int = Query(default=10, ge=1, le=100),
     db: Session = Depends(get_db),
@@ -81,6 +82,7 @@ def get_issues(
         search=search,
         status=status,
         severity=severity,
+        assignee_id=assignee_id,
         page=page,
         page_size=page_size,
     )

@@ -39,3 +39,104 @@
     justify-content: space-between;
   }
 }
+
+/* Project manager profile card */
+.manager-info-block {
+  min-width: 0;
+}
+
+.manager-info-block > h3 {
+  margin: 0 0 16px;
+  color: #252a45;
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.manager-profile {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 16px;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  background: #fff;
+}
+
+.manager-avatar {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 46px;
+  height: 46px;
+  border-radius: 50%;
+  background: #0d5264;
+  color: #fff;
+  font-size: 17px;
+  font-weight: 700;
+}
+
+.manager-profile-details {
+  min-width: 0;
+}
+
+.manager-profile-details strong {
+  display: block;
+  color: #252a45;
+  font-size: 14px;
+  overflow-wrap: anywhere;
+}
+
+.manager-profile-details p {
+  margin: 5px 0 10px;
+  color: #778092;
+  font-size: 12px;
+  overflow-wrap: anywhere;
+}
+
+.manager-role {
+  display: inline-block;
+  padding: 5px 9px;
+  border-radius: 20px;
+  background: #e5f0f3;
+  color: #0d5264;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+/* Styled issue status dropdown */
+.issues-table td select {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 125px;
+  padding: 8px 32px 8px 12px;
+  border: 1px solid #d8e1eb;
+  border-radius: 8px;
+  background-color: #ffffff;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+  color: #263248;
+  font: inherit;
+  font-size: 12px;
+  cursor: pointer;
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.issues-table td select:hover:not(:disabled) {
+  border-color: #0d6477;
+}
+
+.issues-table td select:focus-visible {
+  outline: none;
+  border-color: #0d6477;
+  box-shadow: 0 0 0 3px rgba(13, 100, 119, 0.13);
+}
+
+.issues-table td select:disabled {
+  background-color: #f1f5f9;
+  color: #64748b;
+  cursor: wait;
+  opacity: 0.8;
+}

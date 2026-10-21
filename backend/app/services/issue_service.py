@@ -71,6 +71,7 @@ def get_project_issues(
     search: str | None = None,
     status: str | None = None,
     severity: str | None = None,
+    assignee_id: int | None = None,
     page: int = 1,
     page_size: int = 10,
 ) -> dict:
@@ -80,6 +81,7 @@ def get_project_issues(
         search=search,
         status=status,
         severity=severity,
+        assignee_id=assignee_id,
         page=page,
         page_size=page_size,
     )

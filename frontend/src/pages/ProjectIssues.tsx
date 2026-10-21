@@ -141,6 +141,7 @@ export default function ProjectIssues() {
   const [statusFilter, setStatusFilter] = useState('all');
   const [severityFilter, setSeverityFilter] = useState('all');
   const [currentPage, setCurrentPage] = useState(1);
+  const [assigneeFilter, setAssigneeFilter] = useState('all');
 
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [editingIssue, setEditingIssue] = useState<Issue | null>(null);
@@ -187,7 +188,9 @@ export default function ProjectIssues() {
     if (searchTerm.trim()) params.search = searchTerm.trim();
     if (selectedStatus !== 'all') params.status = selectedStatus;
     if (selectedSeverity !== 'all') params.severity = selectedSeverity;
-
+    if (assigneeFilter !== 'all') {
+      params.assignee_id = Number(assigneeFilter);
+    }
     const response = await api.get<PaginatedIssues>(
       `/projects/${projectId}/issues`,
       { params },
@@ -227,6 +230,9 @@ export default function ProjectIssues() {
         if (search.trim()) params.search = search.trim();
         if (statusFilter !== 'all') params.status = statusFilter;
         if (severityFilter !== 'all') params.severity = severityFilter;
+        if (assigneeFilter !== 'all') {
+          params.assignee_id = Number(assigneeFilter);
+        }
 
         const response = await api.get<PaginatedIssues>(
           `/projects/${projectId}/issues`,
@@ -263,7 +269,14 @@ export default function ProjectIssues() {
     return () => {
       cancelled = true;
     };
-  }, [projectId, currentPage, search, statusFilter, severityFilter]);
+  }, [
+    projectId,
+    currentPage,
+    search,
+    statusFilter,
+    severityFilter,
+    assigneeFilter,
+  ]);
 
   // Fetch the members who can be assigned to an issue.
   useEffect(() => {
@@ -452,11 +465,19 @@ export default function ProjectIssues() {
         'Could not remove this member.',
       );
 
-      if (
-        message.toLowerCase().includes('unclosed issues') ||
-        message.toLowerCase().includes('cannot be removed')
-      ) {
+      if (message.toLowerCase().includes('unclosed issues')) {
+        window.alert(
+          `${member.name} cannot be removed because they still have open issues. Please reassign or close those issues first.`,
+        );
+      } else if (message.toLowerCase().includes('cannot be removed')) {
         window.alert(message);
+      } else if (
+        message.toLowerCase().includes('member_ids') &&
+        message.toLowerCase().includes('at least 1')
+      ) {
+        toast.error(
+          'A project must have at least one team member. Add another member before removing this one.',
+        );
       } else {
         toast.error(message);
       }
@@ -498,6 +519,7 @@ export default function ProjectIssues() {
       setSearch('');
       setStatusFilter('all');
       setSeverityFilter('all');
+      setAssigneeFilter('all');
       setCurrentPage(1);
       await fetchIssues(1, '', 'all', 'all');
 
@@ -523,13 +545,13 @@ export default function ProjectIssues() {
     if (issue.status === newStatus) return;
 
     try {
-      await api.patch(`/issues/${issue.id}/status`, {
+      const response = await api.patch<Issue>(`/issues/${issue.id}/status`, {
         status: newStatus,
       });
 
       setIssues((currentIssues) =>
         currentIssues.map((item) =>
-          item.id === issue.id ? { ...item, status: newStatus } : item,
+          item.id === issue.id ? { ...item, ...response.data } : item,
         ),
       );
 
@@ -613,13 +635,21 @@ export default function ProjectIssues() {
               </div>
 
               <div className="project-details-grid">
-                <div className="project-info-block">
+                <div className="project-info-block manager-info-block">
                   <h3>Project Manager</h3>
+
                   {project.manager ? (
-                    <>
-                      <strong>{project.manager.name}</strong>
-                      <p>{project.manager.email}</p>
-                    </>
+                    <div className="manager-profile">
+                      <div className="manager-avatar">
+                        {project.manager.name.trim().charAt(0).toUpperCase()}
+                      </div>
+
+                      <div className="manager-profile-details">
+                        <strong>{project.manager.name}</strong>
+                        <p>{project.manager.email}</p>
+                        <span className="manager-role">Project Manager</span>
+                      </div>
+                    </div>
                   ) : (
                     <p>Manager details unavailable.</p>
                   )}
@@ -765,6 +795,23 @@ export default function ProjectIssues() {
               <option value="medium">Medium</option>
               <option value="high">High</option>
               <option value="critical">Critical</option>
+            </select>
+
+            <select
+              aria-label="Filter by assigned member"
+              value={assigneeFilter}
+              onChange={(event) => {
+                setAssigneeFilter(event.target.value);
+                setCurrentPage(1);
+              }}
+            >
+              <option value="all">All members</option>
+
+              {members.map((member) => (
+                <option key={member.id} value={member.id}>
+                  {member.name}
+                </option>
+              ))}
             </select>
           </div>
 

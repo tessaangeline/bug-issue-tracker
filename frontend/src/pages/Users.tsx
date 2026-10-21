@@ -60,13 +60,87 @@ export default function Users() {
   const editFormRef = useRef<HTMLElement | null>(null);
 
   function getErrorMessage(err: unknown, fallback: string): string {
-    const detail = (
-      err as {
-        response?: { data?: { detail?: unknown } };
-      }
-    )?.response?.data?.detail;
+    const error = err as {
+      message?: string;
+      response?: {
+        status?: number;
+        data?: {
+          detail?: unknown;
+          message?: unknown;
+        };
+      };
+      request?: unknown;
+    };
 
-    return typeof detail === 'string' ? detail : fallback;
+    const status = error.response?.status;
+    const detail = error.response?.data?.detail;
+
+    if (typeof detail === 'string' && detail.trim()) {
+      return detail;
+    }
+
+    if (Array.isArray(detail) && detail.length > 0) {
+      return detail
+        .map((item: unknown) => {
+          if (typeof item === 'string') return item;
+
+          if (typeof item === 'object' && item !== null) {
+            const validation = item as {
+              loc?: unknown[];
+              msg?: string;
+            };
+
+            const field = validation.loc
+              ?.filter(
+                (part) =>
+                  part !== 'body' && part !== 'query' && part !== 'path',
+              )
+              .join(' → ');
+
+            const message = validation.msg || 'Invalid value';
+
+            return field ? `${field}: ${message}` : message;
+          }
+
+          return String(item);
+        })
+        .join('. ');
+    }
+
+    const serverMessage = error.response?.data?.message;
+    if (typeof serverMessage === 'string' && serverMessage.trim()) {
+      return serverMessage;
+    }
+
+    if (status === 409) {
+      return 'A user with this email already exists.';
+    }
+
+    if (status === 401) {
+      return 'Your session has expired. Please log in again.';
+    }
+
+    if (status === 403) {
+      return "You don't have permission to perform this action.";
+    }
+
+    if (status === 404) {
+      return 'User not found. Refresh the page and try again.';
+    }
+
+    if (status === 422) {
+      return 'Some details are invalid. Please check the fields and try again.';
+    }
+
+    if (status && status >= 500) {
+      return 'A server error occurred. Please try again later.';
+    }
+
+    if (error.request) {
+      return 'Could not reach the server. Check your connection and try again.';
+    }
+
+    return fallback;
   }
 
   async function fetchUsers(page = currentPage) {
@@ -129,10 +203,56 @@ export default function Users() {
       setCurrentPage(1);
       await fetchUsers(1);
     } catch (err: unknown) {
-      const errorMessage = getErrorMessage(
-        err,
-        "Couldn't create user. Please check the details and try again.",
-      );
+      const error = err as {
+        response?: {
+          status?: number;
+          data?: { detail?: unknown };
+        };
+        request?: unknown;
+      };
+
+      const status = error.response?.status;
+      const detail = error.response?.data?.detail;
+
+      let errorMessage: string;
+
+      if (Array.isArray(detail) && detail.length > 0) {
+        errorMessage = detail
+          .map((item: { loc?: string[]; msg?: string }) => {
+            const field = item.loc?.at(-1);
+            const message = item.msg || 'Invalid value';
+
+            if (field === 'name') return `Name: ${message}`;
+            if (field === 'email') return `Email: ${message}`;
+            if (field === 'password') return `Password: ${message}`;
+
+            return message;
+          })
+          .join('. ');
+      } else if (typeof detail === 'string' && detail.trim()) {
+        errorMessage = detail;
+      } else if (status === 409) {
+        errorMessage = 'This email address is already registered.';
+      } else if (status === 400) {
+        errorMessage =
+          'The user could not be created because the submitted details were rejected.';
+      } else if (status === 401) {
+        errorMessage = 'Your session has expired. Please log in again.';
+      } else if (status === 403) {
+        errorMessage = 'Only an administrator can create users.';
+      } else if (status === 422) {
+        errorMessage =
+          'Some user details are invalid. Check the name, email, password and role.';
+      } else if (status && status >= 500) {
+        errorMessage =
+          'The server encountered an error while creating the user.';
+      } else if (error.request) {
+        errorMessage =
+          'The server could not be reached. Check that the backend is running.';
+      } else {
+        errorMessage =
+          'The user could not be created due to an unexpected error.';
+      }
 
       setError(errorMessage);
       toast.error(errorMessage);

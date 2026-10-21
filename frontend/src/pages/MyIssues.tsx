@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import api from '../api/axios';
 import './MyIssues.css';
 import { toast } from 'sonner';
@@ -27,6 +27,11 @@ type PaginatedIssuesResponse = {
   page: number;
   page_size: number;
   total_pages: number;
+};
+
+type Project = {
+  id: number;
+  name: string;
 };
 
 const ISSUES_PER_PAGE = 10;
@@ -61,6 +66,30 @@ export default function MyIssues() {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalIssues, setTotalIssues] = useState(0);
   const [totalPages, setTotalPages] = useState(0);
+
+  const [projects, setProjects] = useState<Project[]>([]);
+  useEffect(() => {
+    let cancelled = false;
+
+    api
+      .get<Project[]>('/projects/')
+      .then((response) => {
+        if (!cancelled) {
+          setProjects(response.data);
+        }
+      })
+      .catch((err) => {
+        if (!cancelled) {
+          toast.error(
+            err.response?.data?.detail ?? 'Could not load project names.',
+          );
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   useEffect(() => {
     setCurrentPage(1);
@@ -110,15 +139,6 @@ export default function MyIssues() {
       cancelled = true;
     };
   }, [search, projectFilter, statusFilter, severityFilter, currentPage]);
-
-  // Project options are based on projects represented in the results.
-  const projects = useMemo(
-    () =>
-      [...new Set(issues.map((issue) => issue.project_id))].sort(
-        (a, b) => a - b,
-      ),
-    [issues],
-  );
 
   async function handleStatusChange(issue: Issue, newStatus: Status) {
     if (issue.status === newStatus) return;
@@ -189,9 +209,10 @@ export default function MyIssues() {
             aria-label="Filter by project"
           >
             <option value="all">All Projects</option>
-            {projects.map((projectId) => (
-              <option key={projectId} value={projectId}>
-                Project #{projectId}
+
+            {projects.map((project) => (
+              <option key={project.id} value={project.id}>
+                {project.name}
               </option>
             ))}
           </select>
@@ -255,7 +276,11 @@ export default function MyIssues() {
                         <p>{issue.description}</p>
                       </td>
 
-                      <td>Project #{issue.project_id}</td>
+                      <td>
+                        {projects.find(
+                          (project) => project.id === issue.project_id,
+                        )?.name ?? `Project #${issue.project_id}`}
+                      </td>
 
                       <td>
                         <select
@@ -289,12 +314,34 @@ export default function MyIssues() {
                           : 'Not set'}
                       </td>
 
-                      <td>{formatDate(issue.due_date)}</td>
+                      <td>
+                        {issue.estimated_duration_days != null &&
+                        issue.created_at
+                          ? new Date(
+                              new Date(issue.created_at).getTime() +
+                                issue.estimated_duration_days *
+                                  24 *
+                                  60 *
+                                  60 *
+                                  1000,
+                            ).toLocaleDateString('en-GB')
+                          : '—'}
+                      </td>
 
                       <td>
                         {issue.status === 'closed' &&
-                        issue.actual_duration_days != null
-                          ? `${issue.actual_duration_days} day(s)`
+                        issue.completed_at &&
+                        issue.created_at
+                          ? `${
+                              Math.round(
+                                Math.max(
+                                  0,
+                                  (new Date(issue.completed_at).getTime() -
+                                    new Date(issue.created_at).getTime()) /
+                                    (1000 * 60 * 60 * 24),
+                                ) * 100,
+                              ) / 100
+                            } day(s)`
                           : 'Pending'}
                       </td>
                     </tr>

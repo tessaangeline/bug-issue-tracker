@@ -16,6 +16,7 @@ def get_project_issues(
     search: str | None = None,
     status: str | None = None,
     severity: str | None = None,
+    assignee_id: int | None = None,
     page: int = 1,
     page_size: int = 10,
 ) -> tuple[list[Issue], int]:
@@ -37,6 +38,9 @@ def get_project_issues(
 
     if severity:
         query = query.filter(Issue.severity == severity)
+
+    if assignee_id is not None:
+        query = query.filter(Issue.assignee_id == assignee_id)
 
     # Count matching records before applying pagination.
     total = query.with_entities(func.count(Issue.id)).scalar() or 0
