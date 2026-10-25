@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import api from '../api/axios';
 import './MyIssues.css';
 import { toast } from 'sonner';
+import { useNavigate } from 'react-router-dom';
 
 type Status = 'open' | 'in_progress' | 'in_review' | 'closed';
 type Severity = 'low' | 'medium' | 'high' | 'critical';
@@ -54,6 +55,8 @@ const formatDate = (value: string | null | undefined) => {
 };
 
 export default function MyIssues() {
+  const navigate = useNavigate();
+
   const [issues, setIssues] = useState<Issue[]>([]);
   const [loading, setLoading] = useState(true);
   const [updatingId, setUpdatingId] = useState<number | null>(null);
@@ -191,6 +194,24 @@ export default function MyIssues() {
   return (
     <main className="dashboard-page">
       <section className="dashboard-content">
+        <header className="users-topbar">
+          <div className="users-brand">
+            <div className="users-brand-icon">B</div>
+            <span>BugTracker</span>
+          </div>
+
+          <div className="users-topbar-right">
+            <span className="users-role-badge">Project Member</span>
+          </div>
+        </header>
+
+        <button
+          type="button"
+          className="issues-back-button"
+          onClick={() => navigate('/')}
+        >
+          ← Back to dashboard
+        </button>
         <h1>My Issues</h1>
         <p>Issues assigned to you.</p>
 

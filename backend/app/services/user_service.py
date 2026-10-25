@@ -144,23 +144,28 @@ def delete_user(db: Session, user_id: int, current_user_id: int) -> None:
 
     if managed_projects:
         raise HTTPException(
-            status_code=400,
-            detail="Reassign this user's projects before deleting the account.",
+            status_code=409,
+            detail=(
+                "Cannot delete this user because they manage one or more "
+                "projects. Reassign those projects before deleting the account."
+            ),
+        )
+
+    member_projects = project_repository.get_projects_with_member(db, user_id)
+
+    if member_projects:
+        raise HTTPException(
+            status_code=409,
+            detail=(
+                "Cannot delete this user because they are assigned to one or "
+                "more projects. Remove them from all projects before deleting "
+                "their account."
+            ),
         )
 
     try:
-        projects = project_repository.get_projects_with_member(db, user_id)
-
-        for project in projects:
-            project.member_ids = [
-                member_id
-                for member_id in (project.member_ids or [])
-                if member_id != user_id
-            ]
-
         db.delete(user)
         db.commit()
-
     except Exception:
         db.rollback()
         raise

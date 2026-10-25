@@ -27,11 +27,25 @@ export default function MyProjects() {
   return (
     <main className="dashboard-page">
       <section className="dashboard-content">
-        <button className="back-button" onClick={() => navigate('/')}>
-          ← Back to Dashboard
+        <header className="users-topbar">
+          <div className="users-brand">
+            <div className="users-brand-icon">B</div>
+            <span>BugTracker</span>
+          </div>
+
+          <div className="users-topbar-right">
+            <span className="users-role-badge">Project Member</span>
+          </div>
+        </header>
+        <button
+          type="button"
+          className="issues-back-button"
+          onClick={() => navigate('/')}
+        >
+          ← Back to dashboard
         </button>
         <h1>My Projects</h1>
-        <p>Projects you're a member of.</p>
+        <p>Projects you're a member of: </p>
 
         {loading && <p>Loading your projects...</p>}
         {error && <p role="alert">{error}</p>}

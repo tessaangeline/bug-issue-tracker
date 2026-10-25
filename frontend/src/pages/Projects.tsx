@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import api from '../api/axios';
 import './Projects.css';
 import { toast } from 'sonner';
+import { useNavigate } from 'react-router-dom';
 
 type User = {
   id: number;
@@ -106,6 +107,7 @@ function getApiErrorMessage(error: unknown, fallback: string): string {
 }
 
 export default function Projects() {
+  const navigate = useNavigate();
   const [projects, setProjects] = useState<Project[]>([]);
   const [users, setUsers] = useState<User[]>([]);
 
@@ -340,8 +342,29 @@ export default function Projects() {
 
   return (
     <main className="projects-page">
+      {/* Full-width navigation header */}
+      <header className="users-topbar">
+        <div className="users-brand">
+          <div className="users-brand-icon">B</div>
+          <span>BugTracker</span>
+        </div>
+
+        <div className="users-topbar-right">
+          <span className="users-role-badge">Administrator</span>
+        </div>
+      </header>
+
+      {/* Projects page heading and action */}
       <header className="projects-header">
         <div>
+          <button
+            type="button"
+            className="issues-back-button"
+            onClick={() => navigate(-1)}
+          >
+            ← Back to dashboard
+          </button>
+
           <p className="projects-eyebrow">WORKSPACE</p>
           <h1>Projects</h1>
           <p className="projects-subtitle">
@@ -363,6 +386,8 @@ export default function Projects() {
           {showForm ? 'Cancel' : '+ Create project'}
         </button>
       </header>
+
+      {/* Keep the rest of your existing code below */}
 
       {showForm && (
         <section className="projects-panel">

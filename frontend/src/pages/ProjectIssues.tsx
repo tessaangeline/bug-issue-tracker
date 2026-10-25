@@ -756,65 +756,6 @@ export default function ProjectIssues() {
             </button>
           </div>
 
-          <div className="issues-filters">
-            <input
-              aria-label="Search issues"
-              placeholder="Search by title or description..."
-              value={search}
-              onChange={(event) => {
-                setSearch(event.target.value);
-                setCurrentPage(1);
-              }}
-            />
-
-            <select
-              aria-label="Filter by status"
-              value={statusFilter}
-              onChange={(event) => {
-                setStatusFilter(event.target.value);
-                setCurrentPage(1);
-              }}
-            >
-              <option value="all">All statuses</option>
-              <option value="open">Open</option>
-              <option value="in_progress">In Progress</option>
-              <option value="in_review">In Review</option>
-              <option value="closed">Closed</option>
-            </select>
-
-            <select
-              aria-label="Filter by severity"
-              value={severityFilter}
-              onChange={(event) => {
-                setSeverityFilter(event.target.value);
-                setCurrentPage(1);
-              }}
-            >
-              <option value="all">All severities</option>
-              <option value="low">Low</option>
-              <option value="medium">Medium</option>
-              <option value="high">High</option>
-              <option value="critical">Critical</option>
-            </select>
-
-            <select
-              aria-label="Filter by assigned member"
-              value={assigneeFilter}
-              onChange={(event) => {
-                setAssigneeFilter(event.target.value);
-                setCurrentPage(1);
-              }}
-            >
-              <option value="all">All members</option>
-
-              {members.map((member) => (
-                <option key={member.id} value={member.id}>
-                  {member.name}
-                </option>
-              ))}
-            </select>
-          </div>
-
           {showCreateForm && (
             <form className="create-issue-form" onSubmit={handleCreateIssue}>
               <h3>Create a new issue</h3>
@@ -914,6 +855,65 @@ export default function ProjectIssues() {
               </div>
             </form>
           )}
+
+          <div className="issues-filters">
+            <input
+              aria-label="Search issues"
+              placeholder="Search by title or description..."
+              value={search}
+              onChange={(event) => {
+                setSearch(event.target.value);
+                setCurrentPage(1);
+              }}
+            />
+
+            <select
+              aria-label="Filter by status"
+              value={statusFilter}
+              onChange={(event) => {
+                setStatusFilter(event.target.value);
+                setCurrentPage(1);
+              }}
+            >
+              <option value="all">All statuses</option>
+              <option value="open">Open</option>
+              <option value="in_progress">In Progress</option>
+              <option value="in_review">In Review</option>
+              <option value="closed">Closed</option>
+            </select>
+
+            <select
+              aria-label="Filter by severity"
+              value={severityFilter}
+              onChange={(event) => {
+                setSeverityFilter(event.target.value);
+                setCurrentPage(1);
+              }}
+            >
+              <option value="all">All severities</option>
+              <option value="low">Low</option>
+              <option value="medium">Medium</option>
+              <option value="high">High</option>
+              <option value="critical">Critical</option>
+            </select>
+
+            <select
+              aria-label="Filter by assigned member"
+              value={assigneeFilter}
+              onChange={(event) => {
+                setAssigneeFilter(event.target.value);
+                setCurrentPage(1);
+              }}
+            >
+              <option value="all">All members</option>
+
+              {members.map((member) => (
+                <option key={member.id} value={member.id}>
+                  {member.name}
+                </option>
+              ))}
+            </select>
+          </div>
 
           {editingIssue && (
             <form

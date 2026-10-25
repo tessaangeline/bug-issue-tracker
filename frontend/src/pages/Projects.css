@@ -604,3 +604,18 @@
     flex-wrap: wrap;
   }
 }
+
+.users-topbar {
+  width: 100%;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 0 20px;
+  margin-bottom: 32px;
+  border-bottom: 1px solid #dce4ec;
+}
+
+.users-topbar-right {
+  margin-left: auto;
+}

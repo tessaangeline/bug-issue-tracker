@@ -13,7 +13,7 @@ def create_project(db: Session, project: Project) -> Project:
 
 
 def get_projects(db: Session) -> list[Project]:
-    return db.query(Project).all()
+    return db.query(Project).order_by(Project.name.asc()).all()
 
 
 def get_projects_for_manager(

@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState, type FormEvent } from 'react';
 import api from '../api/axios';
+import { useNavigate } from 'react-router-dom';
 import './Users.css';
 import { toast } from 'sonner';
 
@@ -23,6 +24,7 @@ type PaginatedUsersResponse = {
 const USERS_PER_PAGE = 10;
 
 export default function Users() {
+  const navigate = useNavigate();
   const [users, setUsers] = useState<User[]>([]);
 
   // Create user form
@@ -389,6 +391,10 @@ export default function Users() {
           <span className="users-role-badge">Administrator</span>
         </div>
       </header>
+
+      <button className="issues-back-button" onClick={() => navigate(-1)}>
+        ← Back to dashboard
+      </button>
 
       <header className="users-header">
         <div className="users-heading">
