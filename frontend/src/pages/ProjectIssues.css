@@ -898,3 +898,15 @@
   outline: 2px solid #0d9488;
   outline-offset: 2px;
 }
+
+.issues-table th.issue-assignee-column,
+.issues-table td.issue-assignee-column {
+  white-space: normal;
+  overflow-wrap: anywhere;
+  line-height: 1.5;
+}
+
+.issues-table td.issue-assignee-column {
+  min-width: 180px;
+  max-width: 220px;
+}

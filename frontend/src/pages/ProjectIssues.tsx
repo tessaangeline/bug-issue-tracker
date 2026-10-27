@@ -1082,7 +1082,7 @@ export default function ProjectIssues() {
                       <th>Issue</th>
                       <th>Status</th>
                       <th>Severity</th>
-                      <th>Assignee</th>
+                      <th className="issue-assignee-column">Assignee</th>
                       <th>Created</th>
                       <th>Estimated</th>
                       <th>Due Date</th>
@@ -1128,12 +1128,12 @@ export default function ProjectIssues() {
                           </span>
                         </td>
 
-                        <td>
+                        <td className="issue-assignee-cell">
                           {issue.assignee_id === null
                             ? 'Unassigned'
                             : (members.find(
                                 (member) => member.id === issue.assignee_id,
-                              )?.name ?? 'Unknown member')}
+                              )?.name ?? 'Member no longer in this project')}
                         </td>
 
                         <td>{formatDate(issue.created_at)}</td>
