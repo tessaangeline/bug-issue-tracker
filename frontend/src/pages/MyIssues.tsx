@@ -208,7 +208,7 @@ export default function MyIssues() {
         <button
           type="button"
           className="issues-back-button"
-          onClick={() => navigate('/')}
+          onClick={() => navigate(-1)}
         >
           ← Back to dashboard
         </button>

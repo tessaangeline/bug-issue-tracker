@@ -41,7 +41,7 @@ export default function ManagerProjects() {
       </header>
 
       <section className="dashboard-content">
-        <button className="manager-back-button" onClick={() => navigate('/')}>
+        <button className="manager-back-button" onClick={() => navigate(-1)}>
           ← Back to dashboard
         </button>
 

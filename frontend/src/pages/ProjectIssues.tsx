@@ -607,7 +607,7 @@ export default function ProjectIssues() {
       <section className="dashboard-content">
         <button
           className="issues-back-button"
-          onClick={() => navigate('/manager/projects')}
+          onClick={() => navigate('/manager/projects', { replace: true })}
         >
           ← Back to My Projects
         </button>
